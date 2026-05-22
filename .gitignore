@@ -1,0 +1,24 @@
+# Node dependencies & caches
+**/node_modules/
+**/dist/
+**/.vite/
+
+# Backup code and old Python virtual environments
+Tini/
+tinitrove/
+
+# Private local environment variables
+**/.env
+**/.env.local
+**/.env.development.local
+**/.env.production.local
+
+# Supabase Local Development secrets
+**/supabase/.branches/
+**/supabase/functions/.env
+**/supabase/.temp/
+**/.supabase/
+
+# System specific files
+.DS_Store
+Thumbs.db
