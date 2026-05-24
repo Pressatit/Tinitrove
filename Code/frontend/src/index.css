@@ -1,1 +1,10 @@
 @import "tailwindcss"; 
+
+@theme {
+  --color-brand-cream: #fdfbf7; /* 1. Replace with your exact hex/rgb cream color */
+}
+
+/* 2. Your existing custom styles using @apply go below the theme definition */
+body {
+  @apply bg-brand-cream;
+}
