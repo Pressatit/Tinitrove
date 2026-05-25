@@ -8,7 +8,7 @@ export type Database = {
     Tables: {
       profiles: {
         Row: {
-          id: string; full_name: string | null; email: string
+          id: string; first_name: string | null; last_name: string | null; email: string
           phone: string | null; delivery_address: string | null
           tinipoints: number; created_at: string
         }

@@ -2,7 +2,7 @@ import { Outlet } from 'react-router-dom'
 import TopBar         from './Topbar'
 import BottomNav      from './Bottomnav'
 import DesktopSidebar from './DesktopSidebar'
-import { useAuth }    from '@/hooks/useAuth'
+import MobileDrawer  from './Mobiledrawer'
 
 /**
  * AppShell — single codebase, two layouts
@@ -10,13 +10,14 @@ import { useAuth }    from '@/hooks/useAuth'
  * Desktop (≥lg): Fixed DesktopSidebar + TopBar + content
  */
 export default function AppShell() {
-  useAuth()
   return (
     <div className="min-h-screen bg-brand-cream">
       <DesktopSidebar />
-      <div className="lg:ml-60">
+      <MobileDrawer />
+      
+      <div className="lg:ml-60 min-h-screen">
         <TopBar />
-        <main className="pb-24 lg:pb-8 px-4 lg:px-8 max-w-5xl mx-auto">
+       <main className="pb-24 lg:pb-8 px-6 lg:px-10">
           <Outlet />
         </main>
       </div>
