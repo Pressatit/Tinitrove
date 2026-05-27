@@ -1,5 +1,5 @@
 import { useNavigate,useLocation } from 'react-router-dom'
-import { useCartStore } from '@/stores/cartstore'
+import { useCartStore, selectCartItemCount } from '@/stores/cartstore'
 import { motion, MotionValue, useMotionValue, useSpring, useTransform } from 'motion/react'
 import { useRef } from 'react'
 
@@ -87,7 +87,7 @@ function DockIcon({to,label,Icon,mouseX,isActive,badge,}: {
 
 export default function BottomNav() {
   const location   = useLocation()
-  const totalItems = useCartStore(s => s.getTotalItems())
+  const totalItems = useCartStore(selectCartItemCount)
 
   // NEW: single shared mouseX value passed to every DockIcon
   // when mouse leaves the dock it resets to Infinity so all icons return to base size

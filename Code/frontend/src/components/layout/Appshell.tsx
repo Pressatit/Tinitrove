@@ -3,6 +3,7 @@ import TopBar         from './Topbar'
 import BottomNav      from './Bottomnav'
 import DesktopSidebar from './DesktopSidebar'
 import MobileDrawer  from './Mobiledrawer'
+import { useCartSync } from '@/hooks/useCart'
 
 /**
  * AppShell — single codebase, two layouts
@@ -10,6 +11,8 @@ import MobileDrawer  from './Mobiledrawer'
  * Desktop (≥lg): Fixed DesktopSidebar + TopBar + content
  */
 export default function AppShell() {
+  useCartSync()
+
   return (
     <div className="min-h-screen bg-brand-cream">
       <DesktopSidebar />

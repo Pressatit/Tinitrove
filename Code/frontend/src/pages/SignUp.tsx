@@ -49,7 +49,8 @@ export default function SignUpPage() {
         },
       },
     })
-    showToast('Signed up successful','success')
+
+    
 
     if (authError) {
       setError(authError.message)
@@ -57,6 +58,7 @@ export default function SignUpPage() {
       return
     }
     // Step 2: navigate to home — useAuth() will pick up the session
+    showToast('Signed up successful','success')
     navigate('/')
   }
 

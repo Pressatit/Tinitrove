@@ -7,57 +7,37 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
       cart: {
         Row: {
-          added_at: string | null
+          added_at: string
           color_selected: string | null
           id: string
-          product_id: string | null
+          product_id: string
           quantity: number
-          user_id: string | null
+          user_id: string
         }
         Insert: {
-          added_at?: string | null
+          added_at?: string
           color_selected?: string | null
           id?: string
-          product_id?: string | null
+          product_id: string
           quantity?: number
-          user_id?: string | null
+          user_id: string
         }
         Update: {
-          added_at?: string | null
+          added_at?: string
           color_selected?: string | null
           id?: string
-          product_id?: string | null
+          product_id?: string
           quantity?: number
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -294,6 +274,7 @@ export type Database = {
           id: string
           last_name: string | null
           phone: string | null
+          role: string | null
           tinipoints: number
         }
         Insert: {
@@ -304,6 +285,7 @@ export type Database = {
           id: string
           last_name?: string | null
           phone?: string | null
+          role?: string | null
           tinipoints?: number
         }
         Update: {
@@ -314,6 +296,7 @@ export type Database = {
           id?: string
           last_name?: string | null
           phone?: string | null
+          role?: string | null
           tinipoints?: number
         }
         Relationships: []
@@ -452,11 +435,7 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },
 } as const
-

@@ -1,90 +1,62 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { create } from 'zustand'
+import type { Product } from '@/types'
 
-// 1. Define the structural shape of a Single Cart Item
-export interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  imageUrl: string | null;
-  quantity: number;
-  stockQuantity: number;
+export interface CartItemWithProduct {
+  id:             string
+  user_id:        string
+  product_id:     string
+  quantity:       number
+  color_selected: string | null
+  added_at:       string
+  product:        Product
 }
 
-// 2. Define exactly what data and actions our Global Store holds
 interface CartState {
-  items: CartItem[];
-  addItem: (product: Omit<CartItem, 'quantity'>) => void;
-  removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
-  clearCart: () => void;
-  getTotalItems: () => number;
-  getTotalPrice: () => number;
+  items:       CartItemWithProduct[]
+  setItems:    (items: CartItemWithProduct[]) => void
+  addItem:     (item: CartItemWithProduct) => void
+  removeItem:  (productId: string) => void
+  updateQty:   (productId: string, qty: number) => void
+  clearCart:   () => void
 }
 
-// 3. Create the Reactive Store with automatic LocalStorage synchronization
-export const useCartStore = create<CartState>()(
-  persist(
-    (set, get) => ({
-      items: [],
+export const useCartStore = create<CartState>((set) => ({
+  items: [],
 
-      // Action: Add an item or increment quantity if it already exists
-      addItem: (product) => {
-        const currentItems = get().items;
-        const existingItem = currentItems.find((item) => item.id === product.id);
+  setItems: (items) => set({ items }),
 
-        if (existingItem) {
-          // Prevent adding more than available warehouse stock
-          if (existingItem.quantity >= product.stockQuantity) return;
-
-          set({
-            items: currentItems.map((item) =>
-              item.id === product.id
-                ? { ...item, quantity: item.quantity + 1 }
-                : item
-            ),
-          });
-        } else {
-          // New item being added to cart for the first time
-          set({ items: [...currentItems, { ...product, quantity: 1 }] });
-        }
-      },
-
-      // Action: Remove an item entirely from the cart
-      removeItem: (productId) => {
-        set({
-          items: get().items.filter((item) => item.id !== productId),
-        });
-      },
-
-      // Action: Update quantity directly (e.g., input field or +/- buttons)
-      updateQuantity: (productId, quantity) => {
-        if (quantity <= 0) {
-          get().removeItem(productId);
-          return;
-        }
-        set({
-          items: get().items.map((item) =>
-            item.id === productId ? { ...item, quantity } : item
-          ),
-        });
-      },
-
-      // Action: Wipe the cart completely (used after a successful checkout)
-      clearCart: () => set({ items: [] }),
-
-      // Utility: Calculate total count of items for Navbar badges
-      getTotalItems: () => {
-        return get().items.reduce((sum, item) => sum + item.quantity, 0);
-      },
-
-      // Utility: Calculate total cost for the checkout button
-      getTotalPrice: () => {
-        return get().items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      },
-    }),
-    {
-      name: 'tinitrove-cart', // Unique key used inside the browser's localStorage engine
+  addItem: (item) => set((s) => {
+    const existing = s.items.find(i => i.product_id === item.product_id)
+    if (existing) {
+      return {
+        items: s.items.map(i =>
+          i.product_id === item.product_id
+            ? { ...i, quantity: i.quantity + item.quantity }
+            : i
+        ),
+      }
     }
-  )
-);
+    return { items: [...s.items, item] }
+  }),
+
+  removeItem: (productId) =>
+    set((s) => ({ items: s.items.filter(i => i.product_id !== productId) })),
+
+  updateQty: (productId, qty) =>
+    set((s) => ({
+      items: qty <= 0
+        ? s.items.filter(i => i.product_id !== productId)
+        : s.items.map(i =>
+            i.product_id === productId ? { ...i, quantity: qty } : i
+          ),
+    })),
+
+  clearCart: () => set({ items: [] }),
+}))
+
+/** Selectors — subscribe to `items` so Zustand re-renders on changes */
+export const selectCartItemCount = (s: CartState) =>
+  s.items.reduce((sum, i) => sum + i.quantity, 0)
+
+export const selectCartTotalPrice = (s: CartState) =>
+  s.items.reduce((sum, i) => sum + i.product.price * i.quantity, 0)
