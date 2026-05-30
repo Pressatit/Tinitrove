@@ -1,5 +1,5 @@
 import { useNavigate,useLocation } from 'react-router-dom'
-import { useCartStore, selectCartItemCount } from '@/stores/cartstore'
+import { selectCartItemCount, useCartStore } from '@/stores/cartstore'
 import { motion, MotionValue, useMotionValue, useSpring, useTransform } from 'motion/react'
 import { useRef } from 'react'
 
@@ -61,6 +61,7 @@ function DockIcon({to,label,Icon,mouseX,isActive,badge,}: {
         strokeWidth={isActive ? 2 : 1.5}
         aria-hidden="true"
       />
+      
 
       {/* Cart badge — logic identical to before, position unchanged */}
       {badge !== undefined && badge > 0 && (

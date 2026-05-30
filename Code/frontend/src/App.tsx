@@ -7,6 +7,8 @@ import CartPage     from '@/pages/CartPage'
 import ProfilePage  from '@/pages/ProfilePage'
 import AboutPage    from '@/pages/AboutPage'
 import CheckoutPage from '@/pages/CheckoutPage'
+import OrdersPage from './pages/OrderPage'
+
 import NotFoundPage from '@/pages/Notfound'
 
 import SignUpPage from './pages/SignUp'
@@ -58,6 +60,7 @@ export default function App() {
            <Route path="/cart"     element={<CartPage />} />
            <Route path="/checkout" element={<CheckoutPage />} />
            <Route path="/profile"  element={<ProfilePage />} />
+           <Route path="/orders"   element={<OrdersPage/>} />
          </Route>
 
          <Route path="*" element={<NotFoundPage />} />

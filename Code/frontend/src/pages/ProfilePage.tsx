@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   User, Mail, Phone, MapPin, Edit3, Save, X,
-  ShoppingCart, Truck, Package, CheckCircle, Star,
+  ShoppingCart, Truck, Package, CheckCircle, CircleDashed,Star,
   Info, Heart
 } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
@@ -26,8 +26,10 @@ const ORDER_STATUSES = [
   { key: 'cart',          label: 'Cart',             color: 'bg-gray-400',   Icon: ShoppingCart },
   { key: 'in_transit',    label: 'In transit',       color: 'bg-yellow-400', Icon: Truck        },
   { key: 'to_be_shipped', label: 'To be shipped',    color: 'bg-cyan-400',   Icon: Package      },
-  { key: 'total',         label: 'Total orders',     color: 'bg-gray-900',   Icon: Star         },
+  { key: 'pending',       label: 'Pending orders',   color: 'bg-red-500',  Icon: CircleDashed },
   { key: 'completed',     label: 'Orders completed', color: 'bg-green-400',  Icon: CheckCircle  },
+  { key: 'total',         label: 'Total orders',     color: 'bg-gray-900',  Icon: Star  },
+  
 ]
 
 // ── Types ─────────────────────────────────────────────────────
@@ -45,6 +47,7 @@ interface OrderCounts {
   in_transit:    number
   to_be_shipped: number
   total:         number
+  pending:       number
   completed:     number
 }
 
@@ -70,7 +73,7 @@ export default function ProfilePage() {
   const [saving,       setSaving]       = useState(false)
   const [showTooltip,  setShowTooltip]  = useState(false)
   const [orderCounts,  setOrderCounts]  = useState<Omit<OrderCounts, 'cart'>>({
-    in_transit: 0, to_be_shipped: 0, total: 0, completed: 0,
+    in_transit: 0, to_be_shipped: 0, pending : 0, completed: 0, total: 0 
   })
   const [favorites,    setFavorites]    = useState<FavoriteProduct[]>([])
   const [favLoading,   setFavLoading]   = useState(true)
@@ -106,16 +109,17 @@ export default function ProfilePage() {
     const fetchOrderData = async () => {
       const { data: orders } = await supabase
         .from('orders')
-        .select('status')
+        .select('payment_status')
         .eq('user_id', profile.id)
 
       if (!orders) return
 
       setOrderCounts({
-        in_transit:    orders.filter(o => o.status === 'in_transit').length,
-        to_be_shipped: orders.filter(o => o.status === 'to_be_shipped').length,
+        in_transit:    orders.filter(o => o.payment_status === 'in_transit').length,
+        to_be_shipped: orders.filter(o => o.payment_status === 'to_be_shipped').length,
+        pending :      orders.filter(o => o.payment_status === 'pending').length,
+        completed:     orders.filter(o => o.payment_status === 'completed').length,
         total:         orders.length,
-        completed:     orders.filter(o => o.status === 'completed').length,
       })
     }
 
@@ -389,7 +393,7 @@ export default function ProfilePage() {
 
         <div className="bg-white rounded-2xl border border-pink-100 p-5">
           {/* Status indicator row — matches wireframe color blocks */}
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-6 gap-2">
             {ORDER_STATUSES.map(({ key, label, color, Icon: StatusIcon }) => (
               <button
                 key={key}

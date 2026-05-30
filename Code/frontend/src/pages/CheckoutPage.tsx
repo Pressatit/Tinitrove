@@ -268,7 +268,7 @@ export default function CheckoutPage() {
           <Button
             variant="outline"
             className="flex-1"
-            onClick={() => navigate('/profile')}
+            onClick={() => navigate('/orders')}
           >
             View orders
           </Button>
