@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabaseClient'
 import type { Product } from '@/types'
 
 interface ProductFilter {
-  category_slug?: string
+  category_slug?: string   // for /category/:slug routes
   is_new_arrival?: boolean
   is_hot_deal?: boolean
   search?: string
@@ -17,18 +17,63 @@ export function useProducts(filter?: ProductFilter) {
 
   useEffect(() => {
     setLoading(true)
-    let query = supabase.from('products').select('*').eq('is_active', true)
-    if (filter?.is_new_arrival) query = query.eq('is_new_arrival', true)
-    if (filter?.is_hot_deal)    query = query.eq('is_hot_deal', true)
-    if (filter?.search)         query = query.ilike('name', `%${filter.search}%`)
-    if (filter?.limit)          query = query.limit(filter.limit)
-    query.order('created_at', { ascending: false })
-      .then(({ data, error }) => {
-        if (error) setError(error.message)
-        else setProducts(data as Product[])
+    setError(null)
+
+    const run = async () => {
+      let query = supabase
+        .from('products')
+        .select(`
+          *,
+          categories ( name, slug )
+        `)
+        .eq('is_active', true)
+
+      // Text search — case insensitive match on product name
+      if (filter?.search) {
+        query = query.ilike('name', `%${filter.search}%`)
+      }
+
+      // Category filter — join through categories table by slug
+      if (filter?.category_slug) {
+        // First get the category id from the slug
+        const { data: cat } = await supabase
+          .from('categories')
+          .select('id')
+          .eq('slug', filter.category_slug)
+          .single()
+
+        if (cat) {
+          query = query.eq('category_id', cat.id)
+        }
+      }
+
+      if (filter?.is_new_arrival) query = query.eq('is_new_arrival', true)
+      if (filter?.is_hot_deal)    query = query.eq('is_hot_deal', true)
+      if (filter?.limit)          query = query.limit(filter.limit)
+
+      query = query.order('created_at', { ascending: false })
+
+      const { data, error } = await query
+
+      if (error) {
+        setError(error.message)
         setLoading(false)
-      })
-  }, [JSON.stringify(filter)])
+        return
+      }
+
+      setProducts(data as Product[])
+      setLoading(false)
+    }
+
+    run()
+  }, [
+    // Re-run whenever any filter value changes
+    filter?.search,
+    filter?.category_slug,
+    filter?.is_new_arrival,
+    filter?.is_hot_deal,
+    filter?.limit,
+  ])
 
   return { products, loading, error }
 }

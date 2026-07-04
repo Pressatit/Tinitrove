@@ -313,7 +313,7 @@ export default function ProfilePage() {
                 className={inputClass}
                 disabled={!editing}
                 value={formData.first_name}
-                onChange={e => setFormData(f => ({ ...f, full_name: e.target.value }))}
+                onChange={e => setFormData(f => ({ ...f, first_name: e.target.value }))}
               />
             </div>
             <div className="space-y-1">
@@ -324,7 +324,7 @@ export default function ProfilePage() {
                 className={inputClass}
                 disabled={!editing}
                 value={formData.last_name}
-                onChange={e => setFormData(f => ({ ...f, second_name: e.target.value }))}
+                onChange={e => setFormData(f => ({ ...f, last_name: e.target.value }))}
               />
             </div>
           </div>

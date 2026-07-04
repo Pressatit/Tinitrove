@@ -1,61 +1,466 @@
-/**
- * Supabase type definitions.
- * Regenerate after schema changes:
- * npx supabase gen types typescript --project-id YOUR_ID > src/types/database.ts
- */
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
   public: {
     Tables: {
-      profiles: {
+      banners: {
         Row: {
-          id: string; first_name: string | null; last_name: string | null; email: string
-          phone: string | null; delivery_address: string | null
-          tinipoints: number; created_at: string
+          created_at: string | null
+          id: string
+          image_url: string
+          is_showing: boolean
+          title: string | null
         }
-        Insert: Omit<Database['public']['Tables']['profiles']['Row'], 'tinipoints'|'created_at'>
-        Update: Partial<Database['public']['Tables']['profiles']['Row']>
+        Insert: {
+          created_at?: string | null
+          id?: string
+          image_url: string
+          is_showing?: boolean
+          title?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_url?: string
+          is_showing?: boolean
+          title?: string | null
+        }
+        Relationships: []
+      }
+      cart: {
+        Row: {
+          added_at: string
+          color_selected: string | null
+          id: string
+          product_id: string
+          quantity: number
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          color_selected?: string | null
+          id?: string
+          product_id: string
+          quantity?: number
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          color_selected?: string | null
+          id?: string
+          product_id?: string
+          quantity?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       categories: {
-        Row: { id: string; name: string; slug: string; description: string | null; cover_image_url: string | null }
-        Insert: Omit<Database['public']['Tables']['categories']['Row'], 'id'>
-        Update: Partial<Database['public']['Tables']['categories']['Row']>
-      }
-      products: {
         Row: {
-          id: string; category_id: string; name: string; description: string | null
-          price: number; stock_count: number; image_urls: string[]; tags: string[]
-          color_variants: string[]; is_active: boolean; is_hot_deal: boolean
-          is_new_arrival: boolean; weight_kg: number | null; created_at: string
+          cover_image_url: string | null
+          description: string | null
+          id: string
+          name: string
+          slug: string
         }
-        Insert: Omit<Database['public']['Tables']['products']['Row'], 'id'|'created_at'>
-        Update: Partial<Database['public']['Tables']['products']['Row']>
+        Insert: {
+          cover_image_url?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          cover_image_url?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      favorites: {
+        Row: {
+          id: string
+          product_id: string | null
+          saved_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          id?: string
+          product_id?: string | null
+          saved_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          product_id?: string | null
+          saved_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_items: {
+        Row: {
+          color_selected: string | null
+          id: string
+          order_id: string | null
+          product_id: string | null
+          quantity: number
+          unit_price: number
+        }
+        Insert: {
+          color_selected?: string | null
+          id?: string
+          order_id?: string | null
+          product_id?: string | null
+          quantity: number
+          unit_price: number
+        }
+        Update: {
+          color_selected?: string | null
+          id?: string
+          order_id?: string | null
+          product_id?: string | null
+          quantity?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       orders: {
         Row: {
-          id: string; user_id: string
-          status: 'cart'|'in_transit'|'to_be_shipped'|'completed'
-          total_amount: number; delivery_address: string
+          created_at: string | null
+          delivery_address: string
+          id: string
           mpesa_ref: string | null
-          payment_status: 'pending'|'paid'|'failed'; created_at: string
+          payment_status: string
+          status: string
+          total_amount: number
+          user_id: string | null
         }
-        Insert: Omit<Database['public']['Tables']['orders']['Row'], 'id'|'created_at'>
-        Update: Partial<Database['public']['Tables']['orders']['Row']>
+        Insert: {
+          created_at?: string | null
+          delivery_address: string
+          id?: string
+          mpesa_ref?: string | null
+          payment_status?: string
+          status?: string
+          total_amount: number
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          delivery_address?: string
+          id?: string
+          mpesa_ref?: string | null
+          payment_status?: string
+          status?: string
+          total_amount?: number
+          user_id?: string | null
+        }
+        Relationships: []
       }
-      order_items: {
-        Row: { id: string; order_id: string; product_id: string; quantity: number; unit_price: number; color_selected: string | null }
-        Insert: Omit<Database['public']['Tables']['order_items']['Row'], 'id'>
-        Update: Partial<Database['public']['Tables']['order_items']['Row']>
+      product_images: {
+        Row: {
+          id: string
+          is_primary: boolean
+          product_id: string | null
+          public_url: string
+          storage_path: string
+        }
+        Insert: {
+          id?: string
+          is_primary?: boolean
+          product_id?: string | null
+          public_url: string
+          storage_path: string
+        }
+        Update: {
+          id?: string
+          is_primary?: boolean
+          product_id?: string | null
+          public_url?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_images_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
-      cart_items: {
-        Row: { id: string; user_id: string; product_id: string; quantity: number; color_selected: string | null; added_at: string }
-        Insert: Omit<Database['public']['Tables']['cart_items']['Row'], 'id'|'added_at'>
-        Update: Partial<Database['public']['Tables']['cart_items']['Row']>
+      products: {
+        Row: {
+          category_id: string | null
+          color_variants: string[]
+          created_at: string | null
+          description: string | null
+          id: string
+          image_urls: string[]
+          is_active: boolean
+          is_hot_deal: boolean
+          is_new_arrival: boolean
+          name: string
+          price: number
+          stock_count: number
+          tags: string[]
+        }
+        Insert: {
+          category_id?: string | null
+          color_variants?: string[]
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_urls?: string[]
+          is_active?: boolean
+          is_hot_deal?: boolean
+          is_new_arrival?: boolean
+          name: string
+          price: number
+          stock_count?: number
+          tags?: string[]
+        }
+        Update: {
+          category_id?: string | null
+          color_variants?: string[]
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_urls?: string[]
+          is_active?: boolean
+          is_hot_deal?: boolean
+          is_new_arrival?: boolean
+          name?: string
+          price?: number
+          stock_count?: number
+          tags?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
-      favorites: {
-        Row: { id: string; user_id: string; product_id: string; saved_at: string }
-        Insert: Omit<Database['public']['Tables']['favorites']['Row'], 'id'|'saved_at'>
-        Update: never
+      profiles: {
+        Row: {
+          created_at: string | null
+          delivery_address: string | null
+          email: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          phone: string | null
+          role: string | null
+          tinipoints: number
+        }
+        Insert: {
+          created_at?: string | null
+          delivery_address?: string | null
+          email: string
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          phone?: string | null
+          role?: string | null
+          tinipoints?: number
+        }
+        Update: {
+          created_at?: string | null
+          delivery_address?: string | null
+          email?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          phone?: string | null
+          role?: string | null
+          tinipoints?: number
+        }
+        Relationships: []
       }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      check_is_admin: { Args: never; Returns: boolean }
+      is_admin: { Args: never; Returns: boolean }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
     }
   }
 }
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const

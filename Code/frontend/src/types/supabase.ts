@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      banners: {
+        Row: {
+          created_at: string | null
+          id: string
+          image_url: string
+          is_showing: boolean
+          title: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          image_url: string
+          is_showing?: boolean
+          title?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_url?: string
+          is_showing?: boolean
+          title?: string | null
+        }
+        Relationships: []
+      }
       cart: {
         Row: {
           added_at: string
@@ -306,7 +330,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_is_admin: { Args: never; Returns: boolean }
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

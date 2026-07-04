@@ -20,6 +20,15 @@ import { useAuthStore } from './stores/authstore'
     
 import ToastContainer from './components/ui/toastcontainer'
 
+import RequireAdmin from '@/components/admin/RequireAdmin'
+import AdminShell from '@/components/admin/AdminShell'
+import AdminDashboard from '@/pages/admin/AdminDashboard'
+import AdminUsers from '@/pages/admin/AdminUsers'
+import AdminCategories from '@/pages/admin/AdminCategories'
+import AdminProducts from './pages/admin/AdminProducts'
+import AdminAddProduct from './pages/admin/AdminAddProduct'
+import AdminBanners from './pages/admin/AdminBanners'
+import AdminOrders from './pages/admin/AdminOrders'
 
 function AuthProvider({ children }: { children: React.ReactNode }) {
   useAuth() // boots session check and auth listener here — runs once, before routes
@@ -41,6 +50,20 @@ export default function App() {
       ) : (
 
       <Routes>
+      {/* Admin Routes */}
+      <Route element={<RequireAdmin/>} >
+        <Route element ={<AdminShell/>}>
+          <Route path="/admin" element={<AdminDashboard/>}/>
+          <Route path="/admin/users" element={<AdminUsers/>}/>
+          <Route path="/admin/categories" element={<AdminCategories/>}/>
+          <Route path="/admin/products" element={<AdminProducts/>}/>
+          <Route path="/admin/products/add" element={<AdminAddProduct/>}/>
+          <Route path="/admin/banners" element={<AdminBanners/>}/>
+          <Route path="/admin/orders" element={<AdminOrders/>}/>
+
+        </Route>
+        
+      </Route>
       {/* Public routes — no auth needed */}
        <Route path="/login"  element={<LoginPage />} />
        <Route path="/signup" element={<SignUpPage />} />

@@ -6,7 +6,6 @@ import { supabase } from '@/lib/supabaseClient'
 import { useAuthStore } from '@/stores/authstore'
 import { useToastStore } from '@/stores/toaststore'
 
-// ── Types ─────────────────────────────────────────────────────
 interface OrderItem {
   id:             string
   product_id:     string
@@ -29,49 +28,36 @@ interface Order {
   order_items:      OrderItem[]
 }
 
-// ── Status color + label map ──────────────────────────────────
 const STATUS_STYLES: Record<Order['status'], { label: string; color: string }> = {
-  cart:          { label: 'Pending',      color: 'text-red-400'    },
-  in_transit:    { label: 'In transit',   color: 'text-yellow-500' },
-  to_be_shipped: { label: 'To be shipped', color: 'text-cyan-500'  },
-  completed:     { label: 'Completed',    color: 'text-green-500'  },
+  cart:          { label: 'Pending',       color: 'text-red-400'    },
+  in_transit:    { label: 'In transit',    color: 'text-yellow-500' },
+  to_be_shipped: { label: 'To be shipped', color: 'text-cyan-500'   },
+  completed:     { label: 'Completed',     color: 'text-green-500'  },
 }
 
-// ── Format order ref — last 3 digits of UUID ─────────────────
 function orderRef(id: string): string {
-  return id.slice(0, 8).toUpperCase()
+  return id.replace(/-/g, '').slice(-8).toUpperCase()
 }
 
-// ── Format date ───────────────────────────────────────────────
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-KE', {
-    day:   'numeric',
-    month: 'long',
-    year:  'numeric',
+    day: 'numeric', month: 'long', year: 'numeric',
   })
 }
 
-// ── Single order card ─────────────────────────────────────────
 function OrderCard({ order }: { order: Order }) {
-  const [expanded,   setExpanded]   = useState(false)
-  const [paying,     setPaying]     = useState(false)
-  const showToast  = useToastStore(s => s.showToast)
-  const navigate   = useNavigate()
+  const [expanded, setExpanded] = useState(false)
+  const [paying,   setPaying]   = useState(false)
+  const showToast = useToastStore(s => s.showToast)
+  const navigate  = useNavigate()
 
   const { label, color } = STATUS_STYLES[order.status]
-
-  // Total items across all order_items
   const totalQty = order.order_items.reduce((sum, i) => sum + i.quantity, 0)
 
   const handleCompletePayment = async () => {
     setPaying(true)
-    // TODO: trigger M-Pesa STK push for this order
-    // For now navigate to checkout with this order pre-loaded
     showToast('Redirecting to payment…', 'info')
-    setTimeout(() => {
-      setPaying(false)
-      navigate('/checkout')
-    }, 800)
+    setTimeout(() => { setPaying(false); navigate('/checkout') }, 800)
   }
 
   return (
@@ -81,61 +67,89 @@ function OrderCard({ order }: { order: Order }) {
       animate={{ opacity: 1, y: 0 }}
       className="bg-white rounded-2xl border border-pink-100 shadow-sm overflow-hidden"
     >
-      {/* ── Order header ──────────────────────────────────── */}
-      <div className="p-5">
-        {/* Top row — order ref, qty, amount, status, date */}
-        <div className="grid grid-cols-4 lg:grid-cols-5 gap-2 mb-6">
+      <div className="p-4 lg:p-5">
 
-          <div className="text-center">
-            <p className="text-xs text-brand-muted mb-0.5">Order ref</p>
-            <p className="font-display text-l font-semibold text-brand-charcoal">
-              {orderRef(order.id)}
-            </p>
-          </div>
+        {/* ── Order header ──────────────────────────────────────────
+            MOBILE:  2×2 grid + date below + status spanning full width
+            DESKTOP: single 5-column row (original layout)
+        ──────────────────────────────────────────────────────────── */}
 
-          <div className="text-center">
-            <p className="text-xs text-brand-muted mb-0.5">Item quantity</p>
-            <p className="font-display text-l font-semibold text-brand-charcoal">
-              {totalQty}
-            </p>
-          </div>
+        {/* Desktop header — hidden on mobile */}
+        <div className="hidden lg:grid lg:grid-cols-5 gap-3 mb-4">
+          {[
+            { label: 'Order ref',     value: orderRef(order.id),                        bold: true  },
+            { label: 'Item quantity', value: String(totalQty),                           bold: true  },
+            { label: 'Total amount',  value: order.total_amount.toLocaleString('en-KE'), bold: true  },
+            { label: 'Status',        value: label,                                      status: true },
+            { label: 'Created on',    value: formatDate(order.created_at),               bold: false },
+          ].map(({ label: l, value, bold, status }) => (
+            <div key={l} className="text-center">
+              <p className="text-xs text-brand-muted mb-0.5">{l}</p>
+              <p className={`font-display text-xl font-semibold ${status ? color : 'text-brand-charcoal'}`}>
+                {value}
+              </p>
+            </div>
+          ))}
+        </div>
 
-          <div className="text-center">
-            <p className="text-xs text-brand-muted mb-0.5">Total amount</p>
-            <p className="font-display text-l font-semibold text-brand-charcoal">
-              {order.total_amount.toLocaleString('en-KE')}
-            </p>
-          </div>
-
-          <div className="text-center">
-            <p className="text-xs text-brand-muted mb-0.5">Status</p>
-            <p className={`font-display text-l font-semibold ${color}`}>
+        {/* Mobile header — hidden on desktop */}
+        <div className="lg:hidden mb-3 space-y-2">
+          {/* Row 1: ref + status */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-brand-muted">Order ref</p>
+              <p className="font-mono text-sm font-bold text-brand-charcoal">
+                {orderRef(order.id)}
+              </p>
+            </div>
+            <div className={`
+              text-xs font-semibold px-3 py-1 rounded-full
+              ${order.status === 'completed'     ? 'bg-green-50  text-green-500'  : ''}
+              ${order.status === 'in_transit'    ? 'bg-yellow-50 text-yellow-600' : ''}
+              ${order.status === 'to_be_shipped' ? 'bg-cyan-50   text-cyan-600'   : ''}
+              ${order.status === 'cart'          ? 'bg-red-50    text-red-400'    : ''}
+            `}>
               {label}
-            </p>
+            </div>
           </div>
 
-          <div className="text-center col-span-4 lg:col-span-1">
-            <p className="text-xs text-brand-muted mb-0.5">Created on</p>
-            <p className="font-display text-base font-semibold text-brand-charcoal">
-              {formatDate(order.created_at)}
-            </p>
+          {/* Row 2: qty + amount + date in a tight strip */}
+          <div className="flex items-center gap-3 text-sm">
+            <div className="flex-1 bg-pink-50/60 rounded-xl px-3 py-2 text-center">
+              <p className="text-[10px] text-brand-muted">Items</p>
+              <p className="font-semibold text-brand-charcoal">{totalQty}</p>
+            </div>
+            <div className="flex-1 bg-pink-50/60 rounded-xl px-3 py-2 text-center">
+              <p className="text-[10px] text-brand-muted">Total (KES)</p>
+              <p className="font-semibold text-brand-charcoal">
+                {order.total_amount.toLocaleString('en-KE')}
+              </p>
+            </div>
+            <div className="flex-1 bg-pink-50/60 rounded-xl px-3 py-2 text-center">
+              <p className="text-[10px] text-brand-muted">Date</p>
+              <p className="font-semibold text-brand-charcoal text-xs">
+                {new Date(order.created_at).toLocaleDateString('en-KE', {
+                  day: 'numeric', month: 'short',
+                })}
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Items section header — always visible */}
+        {/* Items toggle — shared between mobile and desktop */}
         <button
           onClick={() => setExpanded(e => !e)}
-          className="flex items-center justify-between w-full text-left"
+          className="flex items-center justify-between w-full text-left pt-2 border-t border-pink-50"
         >
           <h3 className="font-semibold text-brand-charcoal text-sm">Items</h3>
           {expanded
-            ? <ChevronUp size={16} strokeWidth={1.5} className="text-brand-muted" />
+            ? <ChevronUp   size={16} strokeWidth={1.5} className="text-brand-muted" />
             : <ChevronDown size={16} strokeWidth={1.5} className="text-brand-muted" />
           }
         </button>
       </div>
 
-      {/* ── Expandable items list ─────────────────────────── */}
+      {/* ── Expandable items ──────────────────────────────────────── */}
       <AnimatePresence initial={false}>
         {expanded && (
           <motion.div
@@ -145,21 +159,19 @@ function OrderCard({ order }: { order: Order }) {
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-5 pb-3 space-y-3 border-t border-pink-50 pt-3">
+            <div className="px-4 lg:px-5 pb-3 space-y-3 border-t border-pink-50 pt-3">
               {order.order_items.map((item, index) => {
                 const lineTotal = item.unit_price * item.quantity
                 return (
-                  <div
-                    key={item.id}
-                    className="flex items-center gap-3"
-                  >
+                  <div key={item.id} className="flex items-start gap-3">
+
                     {/* Row number */}
-                    <span className="text-xs text-brand-muted w-4 shrink-0">
+                    <span className="text-xs text-brand-muted w-4 shrink-0 mt-1">
                       {index + 1}
                     </span>
 
                     {/* Product image */}
-                    <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-100 shrink-0">
+                    <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-xl overflow-hidden bg-gray-100 shrink-0">
                       {item.products?.image_urls?.[0] ? (
                         <img
                           src={item.products.image_urls[0]}
@@ -168,40 +180,53 @@ function OrderCard({ order }: { order: Order }) {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                          <Package size={16} className="text-gray-300" />
+                          <Package size={14} className="text-gray-300" />
                         </div>
                       )}
                     </div>
 
-                    {/* Item details — matches wireframe table layout */}
-                    <div className="flex-1 grid grid-cols-5 gap-1 text-xs">
-                      <div>
-                        <p className="text-brand-muted mb-0.5">Item name</p>
-                        <p className="font-medium text-brand-charcoal truncate">
-                          {item.products?.name ?? 'Unknown'}
-                        </p>
+                    {/* Item details
+                        MOBILE:  stacked card — name on top, then 2×2 grid of stats
+                        DESKTOP: single 5-column row (original)
+                    */}
+                    <div className="flex-1 min-w-0">
+
+                      {/* Product name — shared */}
+                      <p className="text-xs font-medium text-brand-charcoal truncate mb-1.5">
+                        {item.products?.name ?? 'Unknown product'}
+                      </p>
+
+                      {/* Desktop stats row — hidden on mobile */}
+                      <div className="hidden lg:grid lg:grid-cols-4 gap-2 text-xs">
+                        {[
+                          { label: 'Quantity',   value: String(item.quantity)                       },
+                          { label: 'Color',      value: item.color_selected ?? '—'                  },
+                          { label: 'Unit price', value: `KES ${item.unit_price.toLocaleString()}`   },
+                          { label: 'Total',      value: `KES ${lineTotal.toLocaleString()}`         },
+                        ].map(({ label: l, value }) => (
+                          <div key={l}>
+                            <p className="text-brand-muted mb-0.5">{l}</p>
+                            <p className="font-medium text-brand-charcoal">{value}</p>
+                          </div>
+                        ))}
                       </div>
-                      <div className="text-center">
-                        <p className="text-brand-muted mb-0.5">Quantity</p>
-                        <p className="font-medium text-brand-charcoal">{item.quantity}</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-brand-muted mb-0.5">Color</p>
-                        <p className="font-medium text-brand-charcoal">
-                          {item.color_selected ?? '—'}
-                        </p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-brand-muted mb-0.5">unitPrice</p>
-                        <p className="font-medium text-brand-charcoal">
-                          {item.unit_price.toLocaleString('en-KE')}
-                        </p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-brand-muted mb-0.5">total</p>
-                        <p className="font-medium text-brand-charcoal">
-                          {lineTotal.toLocaleString('en-KE')}
-                        </p>
+
+                      {/* Mobile stats — 2×2 pill grid */}
+                      <div className="lg:hidden grid grid-cols-2 gap-1.5 text-xs">
+                        {[
+                          { label: 'Qty',   value: String(item.quantity)                     },
+                          { label: 'Color', value: item.color_selected ?? '—'                },
+                          { label: 'Price', value: `KES ${item.unit_price.toLocaleString()}` },
+                          { label: 'Total', value: `KES ${lineTotal.toLocaleString()}`       },
+                        ].map(({ label: l, value }) => (
+                          <div
+                            key={l}
+                            className="bg-gray-50 rounded-lg px-2.5 py-1.5 flex items-center justify-between"
+                          >
+                            <span className="text-brand-muted">{l}</span>
+                            <span className="font-medium text-brand-charcoal">{value}</span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -209,9 +234,9 @@ function OrderCard({ order }: { order: Order }) {
               })}
             </div>
 
-            {/* Complete payment button — only on pending orders */}
+            {/* Complete payment button — pending orders only */}
             {order.payment_status === 'pending' && (
-              <div className="px-5 pb-5 flex justify-end">
+              <div className="px-4 lg:px-5 pb-4 flex justify-end">
                 <button
                   onClick={handleCompletePayment}
                   disabled={paying}
@@ -239,7 +264,6 @@ function OrderCard({ order }: { order: Order }) {
   )
 }
 
-// ── Orders page ───────────────────────────────────────────────
 export default function OrdersPage() {
   const navigate  = useNavigate()
   const profile   = useAuthStore(s => s.profile)
@@ -253,84 +277,58 @@ export default function OrdersPage() {
 
     const fetchOrders = async () => {
       setLoading(true)
-
       const { data, error } = await supabase
         .from('orders')
         .select(`
-          id,
-          status,
-          total_amount,
-          payment_status,
-          delivery_address,
-          created_at,
+          id, status, total_amount, payment_status,
+          delivery_address, created_at,
           order_items (
-            id,
-            product_id,
-            quantity,
-            unit_price,
-            color_selected,
-            products (
-              name,
-              image_urls
-            )
+            id, product_id, quantity, unit_price, color_selected,
+            products ( name, image_urls )
           )
         `)
         .eq('user_id', profile.id)
         .order('created_at', { ascending: false })
 
-      if (error) {
-        showToast('Failed to load orders', 'error')
-        setLoading(false)
-        return
-      }
-
+      if (error) { showToast('Failed to load orders', 'error'); setLoading(false); return }
       setOrders(data as unknown as Order[])
       setLoading(false)
     }
 
     fetchOrders()
 
-    // Realtime — order status updates reflect immediately
     const channel = supabase
       .channel('orders-page')
-      .on(
-        'postgres_changes',
-        {
-          event:  'UPDATE',
-          schema: 'public',
-          table:  'orders',
-          filter: `user_id=eq.${profile.id}`,
-        },
-        () => fetchOrders()
-      )
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'orders',
+        filter: `user_id=eq.${profile.id}`,
+      }, () => fetchOrders())
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
   }, [profile?.id])
 
-  // ── Loading skeleton ──────────────────────────────────────
   if (loading) {
     return (
       <div className="py-4 space-y-4 max-w-2xl mx-auto lg:max-w-4xl">
-        <div className="h-7 w-32 bg-gray-200 rounded animate-pulse" />
-        {[1, 2, 3].map(i => (
-          <div key={i} className="bg-white rounded-2xl border border-pink-100 p-5 space-y-3">
-            <div className="grid grid-cols-3 lg:grid-cols-5 gap-3">
-              {[1,2,3,4,5].map(j => (
-                <div key={j} className="space-y-1 text-center">
-                  <div className="h-3 bg-gray-200 rounded animate-pulse mx-auto w-16" />
-                  <div className="h-7 bg-gray-200 rounded animate-pulse mx-auto w-12" />
-                </div>
+        <div className="h-7 w-24 bg-gray-200 rounded animate-pulse" />
+        {[1, 2].map(i => (
+          <div key={i} className="bg-white rounded-2xl border border-pink-100 p-4 space-y-3">
+            <div className="flex justify-between">
+              <div className="h-5 w-24 bg-gray-200 rounded animate-pulse" />
+              <div className="h-5 w-16 bg-gray-200 rounded-full animate-pulse" />
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {[1,2,3].map(j => (
+                <div key={j} className="h-12 bg-gray-100 rounded-xl animate-pulse" />
               ))}
             </div>
-            <div className="h-4 bg-gray-200 rounded animate-pulse w-16" />
           </div>
         ))}
       </div>
     )
   }
 
-  // ── Empty state ───────────────────────────────────────────
   if (orders.length === 0) {
     return (
       <div className="py-12 flex flex-col items-center gap-4 min-h-[50vh]">
@@ -353,21 +351,17 @@ export default function OrdersPage() {
 
   return (
     <div className="py-4 space-y-4 max-w-2xl mx-auto lg:max-w-4xl">
-
-      {/* Page header */}
       <h2 className="font-display text-2xl text-brand-charcoal border-b-2 border-brand-charcoal pb-0.5 inline-block">
         Orders
       </h2>
 
-      {/* Order cards — numbered as per wireframe */}
       <div className="space-y-4">
         {orders.map((order, index) => (
-          <div key={order.id} className="flex items-start">
-            {/* Order number — large on left matching wireframe */}
-            <span className="font-display text-xl font-bold text-brand-charcoal w-8 shrink-0 mt-4">
+          <div key={order.id} className="flex gap-3 items-start">
+            <span className="font-display text-2xl lg:text-3xl font-bold text-brand-charcoal w-6 lg:w-8 shrink-0 mt-4">
               {index + 1}
             </span>
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <OrderCard order={order} />
             </div>
           </div>
