@@ -37,7 +37,7 @@ export default function SignUpPage() {
     // Step 1: create the auth user with email + password
     // We pass full_name and other data into user_metadata
     // Supabase stores this on the auth.users record
-    const { error: authError } = await supabase.auth.signUp({
+    const { data :authData ,error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -57,6 +57,25 @@ export default function SignUpPage() {
       setLoading(false)
       return
     }
+
+    if (authData?.user) {
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .insert({
+      id: authData.user.id, // Maps directly to auth primary key
+      first_name: firstName,
+      last_name: secondName,
+      email: email,
+      phone: phone,
+      delivery_address: county
+    })
+
+  if (profileError) {
+    setError(`Account created, but profile setup failed: ${profileError.message}`)
+    setLoading(false)
+    return
+  }
+}
     // Step 2: navigate to home — useAuth() will pick up the session
     showToast('Signed up successful','success')
     navigate('/')
