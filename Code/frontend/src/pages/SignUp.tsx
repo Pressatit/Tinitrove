@@ -30,56 +30,73 @@ export default function SignUpPage() {
   const [error,      setError]      = useState<string | null>(null)
 
   const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
+  e.preventDefault()
+  setLoading(true)
+  setError(null)
 
-    // Step 1: create the auth user with email + password
-    // We pass full_name and other data into user_metadata
-    // Supabase stores this on the auth.users record
-    const { data :authData ,error: authError } = await supabase.auth.signUp({
+  try {
+    // Step 1: Create auth record
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
-          first_name:  firstName,
+          first_name: firstName,
           last_name: secondName,
-          phone:phone,
-          delivery_address :county,
+          phone: phone,
+          delivery_address: county,
         },
       },
     })
 
-    
-
     if (authError) {
-      setError(authError.message)
+      setError(`Auth Error: ${authError.message}`)
       setLoading(false)
       return
     }
 
-    if (authData?.user) {
-  const { error: profileError } = await supabase
-    .from('profiles')
-    .insert({
-      id: authData.user.id, // Maps directly to auth primary key
-      first_name: firstName,
-      last_name: secondName,
-      email: email,
-      phone: phone,
-      delivery_address: county
-    })
+    // CRITICAL: Pull the ID aggressively from whatever authData returns
+    const targetUserId = authData?.user?.id 
 
-  if (profileError) {
-    setError(`Account created, but profile setup failed: ${profileError.message}`)
+    console.log("Auth signup payload received:", authData)
+    console.log("Extracted User ID:", targetUserId)
+
+    if (!targetUserId) {
+      // If this fires, email confirmation is active or the account is pending validation
+      setError("Account creation pending. Please check your email inbox for a verification link before signing in.")
+      setLoading(false)
+      return
+    }
+
+    // Step 2: Push the public profile row explicitly
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .insert({
+        id: targetUserId,
+        first_name: firstName,
+        last_name: secondName,
+        email: email,
+        phone: phone,
+        delivery_address: county
+      })
+
+    if (profileError) {
+      console.error("Profile insertion database error:", profileError)
+      setError(`Auth succeeded, but profile failed: ${profileError.message}`)
+      setLoading(false)
+      return
+    }
+
+    showToast('Signed up successfully!', 'success')
+    navigate('/')
+
+  } catch (err: any) {
+    console.error("Unexpected signup workflow failure:", err)
+    setError(`Unexpected error: ${err.message || err}`)
+  } finally {
     setLoading(false)
-    return
   }
 }
-    // Step 2: navigate to home — useAuth() will pick up the session
-    showToast('Signed up successful','success')
-    navigate('/')
-  }
 
   return (
     // Same responsive pattern as LoginPage:
