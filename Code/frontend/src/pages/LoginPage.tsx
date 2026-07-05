@@ -145,6 +145,11 @@ export default function LoginPage() {
                   : <Eye    size={16} strokeWidth={1.5} />
                 }
               </button>
+              <Link
+               to="/forgot-password"
+               className="text-xs text-brand-pink hover:underline" >
+               Forgot password?
+             </Link>
             </div>
           </div>
 

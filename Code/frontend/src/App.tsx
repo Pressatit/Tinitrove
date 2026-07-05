@@ -8,6 +8,8 @@ import ProfilePage  from '@/pages/ProfilePage'
 import AboutPage    from '@/pages/AboutPage'
 import CheckoutPage from '@/pages/CheckoutPage'
 import OrdersPage from './pages/OrderPage'
+import ForgotPassword from '@/pages/ForgotPassword'
+import ResetPassword from '@/pages/Resetpassword'
 
 import NotFoundPage from '@/pages/Notfound'
 
@@ -66,6 +68,8 @@ export default function App() {
       </Route>
       {/* Public routes — no auth needed */}
        <Route path="/login"  element={<LoginPage />} />
+       <Route path="/forgot-password" element={< ForgotPassword/>}/>
+       <Route path="/reset-password"  element={<ResetPassword/>}/>
        <Route path="/signup" element={<SignUpPage />} />
 
       {/* Semi-public — has shell but no auth required */}
