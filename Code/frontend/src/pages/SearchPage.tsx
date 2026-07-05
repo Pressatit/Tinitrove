@@ -116,7 +116,7 @@ export default function SearchPage() {
   }
 
   // ── Handle category pill tap ──────────────────────────────
-  const handleCategoryClick = (categorySlug: string) => {
+  {/**const _handleCategoryClick = (categorySlug: string) => {
     if (activeCategory === categorySlug) {
       // Tapping active category deselects it
       setActiveCategory('')
@@ -129,7 +129,7 @@ export default function SearchPage() {
     // so results aren't doubly filtered confusingly
     setInputValue('')
     setSearchParams({})
-  }
+  }*/}
 
   // ── Clear everything ──────────────────────────────────────
   const handleClear = () => {

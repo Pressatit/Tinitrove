@@ -82,7 +82,7 @@ function OrderCard({ order }: { order: Order }) {
             { label: 'Total amount',  value: order.total_amount.toLocaleString('en-KE'), bold: true  },
             { label: 'Status',        value: label,                                      status: true },
             { label: 'Created on',    value: formatDate(order.created_at),               bold: false },
-          ].map(({ label: l, value, bold, status }) => (
+          ].map(({ label: l, value, status }) => (
             <div key={l} className="text-center">
               <p className="text-xs text-brand-muted mb-0.5">{l}</p>
               <p className={`font-display text-xl font-semibold ${status ? color : 'text-brand-charcoal'}`}>
