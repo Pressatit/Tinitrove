@@ -189,7 +189,6 @@ export default function LoginPage() {
             Sign up
           </Link>
         </p>
-        <p> Hello the password is pressonit🥳</p>
       </div>
     </div>
   )
