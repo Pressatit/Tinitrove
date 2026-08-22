@@ -48,9 +48,9 @@ function formatDate(iso: string): string {
 function OrderCard({ order }: { order: Order }) {
   const [expanded, setExpanded] = useState(false)
   const [paying,   setPaying]   = useState(false)
-  const [payingOrderId,setPayingOrderId] =useState<string | null >(null)
+  
   const showToast = useToastStore(s => s.showToast)
-  const navigate  = useNavigate()
+  
   const profile =useAuthStore((s)=>s.profile)
 
   const { label, color } = STATUS_STYLES[order.status]
@@ -59,7 +59,7 @@ function OrderCard({ order }: { order: Order }) {
   const handleCompletePayment = async (order: Order) => {
   
   setPaying(true)
-  setPayingOrderId(order.id)
+  
   showToast('Initiating M-Pesa payment…', 'info')
 
   try {
@@ -75,7 +75,7 @@ function OrderCard({ order }: { order: Order }) {
     if (error || data?.ResponseCode !== "0") {
       showToast('Failed to send M-Pesa prompt. Please try again.', 'error')
       setPaying(false)
-      setPayingOrderId(null)
+      
       return
     }
 
@@ -84,7 +84,7 @@ function OrderCard({ order }: { order: Order }) {
     showToast('Something went wrong initiating payment.', 'error')
   } finally {
     setPaying(false)
-    setPayingOrderId(null)
+    
   }
 }
 
