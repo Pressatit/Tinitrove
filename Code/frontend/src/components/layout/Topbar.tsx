@@ -12,7 +12,7 @@ export default function TopBar() {
     <header className="sticky top-0 z-30 bg-brand-cream/95 backdrop-blur border-b border-pink-100 w-full">
       <div className="lg:hidden flex items-center justify-between px-6 pt-4 pb-2">
         <Link to="/" className="block">
-          <h1 className="font-display text-2xl tracking-tight leading-none">TiniTrove 🎀</h1>
+          <h1 className="font-display text-2xl tracking-tight leading-none">TiniTrove </h1>
           <p className="text-xs text-brand-muted italic mt-2">
             Curated gifts and cute aestheic finds
           </p>
@@ -30,7 +30,8 @@ export default function TopBar() {
       <div className="hidden lg:block text-center pt-5 pb-3 px-6">
         <Link to="/" className="inline-block">
           <h1 className="font-display text-2xl tracking-tight leading-none">
-            TiniTrove 🎀
+            TiniTrove 
+            {/*<img src={'tini.jpg'}/>*/}
           </h1>
           <p className="text-xs text-brand-muted italic mt-1.5">
             Curated gifts and cute aestheic finds

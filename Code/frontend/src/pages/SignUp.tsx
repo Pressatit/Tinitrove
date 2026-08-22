@@ -232,7 +232,7 @@ export default function SignUpPage() {
                 required
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
-                placeholder="0712 345 678"
+                placeholder="0712345678"
                 className="
                   w-full pl-9 pr-4 py-3 text-sm
                   bg-pink-50/50 border border-pink-100 rounded-xl outline-none

@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { Home, Search, ShoppingCart, User, LogOut, Info } from 'lucide-react'
 import { useToastStore } from '@/stores/toaststore'
 
+
 const NAV = [
   { to: '/',        label: 'Home page', Icon: Home },
   { to: '/search',  label: 'Search',   Icon: Search },
@@ -15,7 +16,20 @@ export default function DesktopSidebar() {
   const reset = useAuthStore(s => s.reset)
   const navigate =useNavigate()
   const showToast = useToastStore(s => s.showToast)
-  const handleLogout = async () => { await supabase.auth.signOut(); reset(); navigate('/'); showToast('Logged Out successfully!','success')}
+  const profile=useAuthStore((s)=>s.profile)
+ 
+   const handleLogout = async () => { 
+    if (profile?.id){
+       await supabase.auth.signOut();
+       reset();
+       navigate('/'); 
+      showToast('Logged Out successfully!','success')}
+    
+    else{
+      showToast('No logged in account','info')
+    }
+   }
+
 
   return (
     <aside className="hidden lg:flex flex-col fixed left-0 top-0 bottom-0 w-60
@@ -59,6 +73,7 @@ export default function DesktopSidebar() {
             w-full flex items-center gap-3 px-3 py-2
             text-sm text-red-400 hover:bg-red-50 rounded-xl transition-colors
           "
+        
         >
           {/* CHANGED: was text-only, now has LogOut icon */}
           <LogOut size={16} strokeWidth={1.5} aria-hidden="true" />

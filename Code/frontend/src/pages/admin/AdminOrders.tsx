@@ -75,11 +75,22 @@ export default function AdminOrders() {
   }))
 
   const filtered = debouncedSearch
-    ? shaped.filter(o =>
-        o.profiles?.email?.includes(debouncedSearch) ||
-        o.profiles?.first_name?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-        o.id.includes(debouncedSearch)
-      )
+    ? shaped.filter(o => {
+        // 1. Create the exact same short reference used in your UI
+        const orderRef = o.id
+          ? o.id.replace(/-/g, '').slice(-8).toUpperCase()
+          : '';
+
+        // 2. Make the search query uppercase to match the reference format
+        const cleanQuery = debouncedSearch.toUpperCase();
+
+        return (
+          o.profiles?.email?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+          orderRef.includes(cleanQuery) || // Checks the formatted reference
+          o.profiles?.first_name?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+          o.id?.includes(debouncedSearch)
+        );
+      })
     : shaped
 
   setOrders(filtered)

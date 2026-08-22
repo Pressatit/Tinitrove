@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState,useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'motion/react'
 import NumberFlow from '@number-flow/react'
@@ -143,9 +143,45 @@ export default function CheckoutPage() {
   const [phone,     setPhone]     = useState(profile?.phone ?? '')
   const [county,    setCounty]    = useState(profile?.delivery_address ?? '')
   const [address,   setAddress]   = useState('')
+  
 
   // Payment
   const [mpesaPhone, setMpesaPhone] = useState(profile?.phone ?? '')
+  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid' | 'failed'>('pending')
+
+
+// Subscribe to real-time changes on the orders table for this order
+  useEffect(() => {
+  if (!orderId || step !== 'confirmed') return
+
+  
+  const channel = supabase
+    .channel(`order-status-${orderId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'orders',
+        filter: `id=eq.${orderId}`,
+      },
+      (payload) => {
+        const updatedOrder = payload.new
+        if (updatedOrder.payment_status === 'paid') {
+          setPaymentStatus('paid')
+          showToast('Payment received successfully!', 'success')
+        } else if (updatedOrder.payment_status === 'failed') {
+          setPaymentStatus('failed')
+          showToast('M-Pesa payment failed or was cancelled.', 'error')
+        }
+      }
+    )
+    .subscribe()
+
+  return () => {
+    supabase.removeChannel(channel)
+  }
+}, [orderId, step])
 
   // ── If cart is empty redirect ─────────────────────────────
   if (items.length === 0 && step !== 'confirmed') {
@@ -157,6 +193,19 @@ export default function CheckoutPage() {
       </div>
     )
   }
+
+  const triggerMpesaPayment = async (orderId: string, phone: string, amount: number) => {
+  const { data, error } = await supabase.functions.invoke('mpesaSTKPush', {
+    body: { orderId, phone, amount }
+  })
+
+  if (error || data.ResponseCode !== "0") {
+    showToast("Failed to send M-Pesa prompt", "error")
+    return
+  }
+
+  showToast("Check your phone to enter M-Pesa PIN!", "success")
+}
 
   // ── Create order in Supabase ──────────────────────────────
   const handlePlaceOrder = async () => {
@@ -209,20 +258,11 @@ export default function CheckoutPage() {
     }
 
     // Step 3: trigger M-Pesa STK push
-    // Format phone: 0712345678 → 254712345678
-    const formattedPhone = mpesaPhone.startsWith('0')
-      ? `254${mpesaPhone.slice(1)}`
-      : mpesaPhone
-
-    // TODO: replace with your IntaSend or Daraja API call
-    // For now we simulate a successful payment trigger
-    console.log('M-Pesa STK Push → phone:', formattedPhone, 'amount:', totalPrice, 'order:', order.id)
-    // When you wire IntaSend:
-    // await fetch('https://payment.intasend.com/api/v1/payment/mpesa-stk-push/', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
-    //   body: JSON.stringify({ phone_number: formattedPhone, amount: totalPrice, api_ref: order.id })
-    // })
+    const orderId=order.id
+    
+    triggerMpesaPayment(orderId,mpesaPhone,totalPrice)
+    
+    
 
     // Step 4: clear cart (DB + store) and show confirmation
     setOrderId(order.id)
@@ -240,48 +280,59 @@ export default function CheckoutPage() {
         className="py-12 flex flex-col items-center gap-5 text-center max-w-sm mx-auto"
       >
         <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.1 }}
-          className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center"
-        >
-          <CheckCircle size={40} strokeWidth={1.5} className="text-green-500" />
-        </motion.div>
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+        className={cn(
+          "w-20 h-20 rounded-full flex items-center justify-center",
+          paymentStatus === 'paid' && "bg-green-50",
+          paymentStatus === 'pending' && "bg-amber-50",
+          paymentStatus === 'failed' && "bg-red-50"
+        )}
+      >
+        {paymentStatus === 'paid' && <CheckCircle size={40} className="text-green-500" />}
+        {paymentStatus === 'pending' && <Loader2 size={40} className="text-amber-500 animate-spin" />}
+        {paymentStatus === 'failed' && <X size={40} className="text-red-500" />}
+      </motion.div>
 
         <div className="space-y-1">
-          <h2 className="font-display text-2xl text-brand-charcoal">Order placed!</h2>
-          <p className="text-sm text-brand-muted">
-            Check your M-Pesa for the payment prompt
+        <h2 className="font-display text-2xl text-brand-charcoal">
+          {paymentStatus === 'paid' && "Payment Confirmed!"}
+          {paymentStatus === 'pending' && "Waiting for M-Pesa Confirmation…"}
+          {paymentStatus === 'failed' && "Payment Failed"}
+        </h2>
+        
+        {orderId && (
+          <p className="text-xs text-brand-muted mt-2">
+            Order ref: <span className="font-mono text-brand-charcoal">{orderId.slice(0, 8).toUpperCase()}</span>
           </p>
-          {orderId && (
-            <p className="text-xs text-brand-muted mt-2">
-              Order ref: <span className="font-mono text-brand-charcoal">{orderId.slice(0, 8).toUpperCase()}</span>
-            </p>
-          )}
-        </div>
+        )}
+      </div>
 
-        <p className="text-xs text-brand-muted px-4 leading-relaxed">
-          Enter your M-Pesa PIN to complete payment. Your order status will update once payment is confirmed.
-        </p>
+      <p className="text-xs text-brand-muted px-4 leading-relaxed">
+        {paymentStatus === 'paid' && "Your payment has been received and your order is being processed!"}
+        {paymentStatus === 'pending' && "Check your phone and enter your M-Pesa PIN to complete the transaction."}
+        {paymentStatus === 'failed' && "The transaction was cancelled or failed. You can try again from your orders page."}
+      </p>
 
         <div className="flex gap-3 w-full">
-          <Button
-            variant="outline"
-            className="flex-1"
-            onClick={() => navigate('/orders')}
-          >
-            View orders
-          </Button>
-          <Button
-            className="flex-1"
-            onClick={() => navigate('/')}
-          >
-            Keep shopping
-          </Button>
-        </div>
-      </motion.div>
-    )
-  }
+        <Button
+          variant="outline"
+          className="flex-1"
+          onClick={() => navigate('/orders')}
+        >
+          View orders
+        </Button>
+        <Button
+          className="flex-1"
+          onClick={() => navigate('/')}
+        >
+          Keep shopping
+        </Button>
+      </div>
+    </motion.div>
+  )
+}
 
   return (
     // Responsive: stacked on mobile, side-by-side on desktop

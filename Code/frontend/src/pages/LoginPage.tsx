@@ -57,7 +57,7 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <h1 className="font-display text-3xl tracking-tight">TiniTrove 🎀</h1>
           <p className="text-xs text-brand-muted italic mt-1.5">
-            ------------
+         _____
           </p>
         </div>
 
@@ -145,11 +145,15 @@ export default function LoginPage() {
                   : <Eye    size={16} strokeWidth={1.5} />
                 }
               </button>
+              
+            </div>
+            <div className="flex justify-end">
               <Link
-               to="/forgot-password"
-               className="text-xs text-brand-pink hover:underline" >
-               Forgot password?
-             </Link>
+                to="/forgot-password"
+                className="text-xs text-brand-pink hover:underline"
+                 >
+                Forgot password?
+              </Link>
             </div>
           </div>
 

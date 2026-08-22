@@ -109,16 +109,16 @@ export default function ProfilePage() {
     const fetchOrderData = async () => {
       const { data: orders } = await supabase
         .from('orders')
-        .select('payment_status')
+        .select('status')
         .eq('user_id', profile.id)
 
       if (!orders) return
 
       setOrderCounts({
-        in_transit:    orders.filter(o => o.payment_status === 'in_transit').length,
-        to_be_shipped: orders.filter(o => o.payment_status === 'to_be_shipped').length,
-        pending :      orders.filter(o => o.payment_status === 'pending').length,
-        completed:     orders.filter(o => o.payment_status === 'completed').length,
+        in_transit:    orders.filter(o => o.status === 'in_transit').length,
+        to_be_shipped: orders.filter(o => o.status === 'to_be_shipped').length,
+        pending :      orders.filter(o => o.status === 'cart').length,
+        completed:     orders.filter(o => o.status === 'completed').length,
         total:         orders.length,
       })
     }

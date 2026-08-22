@@ -48,17 +48,45 @@ function formatDate(iso: string): string {
 function OrderCard({ order }: { order: Order }) {
   const [expanded, setExpanded] = useState(false)
   const [paying,   setPaying]   = useState(false)
+  const [payingOrderId,setPayingOrderId] =useState<string | null >(null)
   const showToast = useToastStore(s => s.showToast)
   const navigate  = useNavigate()
+  const profile =useAuthStore((s)=>s.profile)
 
   const { label, color } = STATUS_STYLES[order.status]
   const totalQty = order.order_items.reduce((sum, i) => sum + i.quantity, 0)
 
-  const handleCompletePayment = async () => {
-    setPaying(true)
-    showToast('Redirecting to payment…', 'info')
-    setTimeout(() => { setPaying(false); navigate('/checkout') }, 800)
+  const handleCompletePayment = async (order: Order) => {
+  
+  setPaying(true)
+  setPayingOrderId(order.id)
+  showToast('Initiating M-Pesa payment…', 'info')
+
+  try {
+    // Call the mpesaSTKPush Edge Function with the existing order details
+    const { data, error } = await supabase.functions.invoke('mpesaSTKPush', {
+      body: { 
+        orderId: order.id, 
+        phone: profile?.phone, // Use order phone or user's default phone
+        amount: order.total_amount 
+      }
+    })
+
+    if (error || data?.ResponseCode !== "0") {
+      showToast('Failed to send M-Pesa prompt. Please try again.', 'error')
+      setPaying(false)
+      setPayingOrderId(null)
+      return
+    }
+
+    showToast('Check your phone to enter M-Pesa PIN!', 'success')
+  } catch (err) {
+    showToast('Something went wrong initiating payment.', 'error')
+  } finally {
+    setPaying(false)
+    setPayingOrderId(null)
   }
+}
 
   return (
     <motion.div
@@ -235,10 +263,10 @@ function OrderCard({ order }: { order: Order }) {
             </div>
 
             {/* Complete payment button — pending orders only */}
-            {order.payment_status === 'pending' && (
+            {order.payment_status === 'pending' || order.payment_status === 'failed' && (
               <div className="px-4 lg:px-5 pb-4 flex justify-end">
                 <button
-                  onClick={handleCompletePayment}
+                  onClick={()=>handleCompletePayment(order)}
                   disabled={paying}
                   className="
                     flex items-center gap-2 px-5 py-2.5
@@ -253,7 +281,7 @@ function OrderCard({ order }: { order: Order }) {
                     ? <Loader2 size={14} strokeWidth={2} className="animate-spin" />
                     : <CreditCard size={14} strokeWidth={1.5} />
                   }
-                  {paying ? 'Redirecting…' : 'Complete payment'}
+                  {paying ? 'Sending prompt ...' : 'Complete payment'}
                 </button>
               </div>
             )}
