@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 
 // ── SET YOUR LAUNCH DATE HERE ─────────────────────────────────
 // Format: 'YYYY-MM-DDTHH:MM:SS+03:00' (Kenya UTC+3)
-const LAUNCH_DATE = new Date('2026-09-09T08:00:00+03:00')
+const LAUNCH_DATE = new Date('2026-09-10T09:00:00+03:00')
 // ─────────────────────────────────────────────────────────────
 
 interface TimeLeft {
@@ -174,12 +174,12 @@ export default function Launch() {
               </a>
               <span className="text-[#555]">·</span>
               <a
-                href="https://www.instagram.com/tini_troveke/"
+                href="https://www.instagram.com/tini.troveke/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[#F4A7B9] hover:underline"
               >
-                @tini_troveke
+                @tini.troveke
               </a>
             </div>
           </div>
