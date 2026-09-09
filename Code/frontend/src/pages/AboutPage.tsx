@@ -90,13 +90,13 @@ export default function AboutPage() {
                 </div>
                 <div>
                   <p className="text-xs text-brand-muted">Instagram</p>
-                  <p className="font-medium">@Tini.troveke</p>
+                  <p className="font-medium">@tini.troveke</p>
                 </div>
               </a>
 
               {/* TikTok */}
               <a
-                href="https://tiktok.com/@Tini_troveke"
+                href="https://tiktok.com/@tini.troveke"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 text-sm text-brand-charcoal hover:text-brand-pink transition-colors"
@@ -106,7 +106,7 @@ export default function AboutPage() {
                 </div>
                 <div>
                   <p className="text-xs text-brand-muted">TikTok</p>
-                  <p className="font-medium">@Tini_troveke</p>
+                  <p className="font-medium">@tini.troveke</p>
                 </div>
               </a>
             </div>
