@@ -30,7 +30,12 @@ export function useProducts(filter?: ProductFilter) {
 
       // Text search — case insensitive match on product name
       if (filter?.search) {
-        query = query.ilike('name', `%${filter.search}%`)
+
+        const searchTerm = `%${filter.search}%`
+
+        const tagSearch = `{${filter.search}}`
+
+        query = query.or(`name.ilike.${searchTerm}, tags.cs.${tagSearch}`)
       }
 
       // Category filter — join through categories table by slug
