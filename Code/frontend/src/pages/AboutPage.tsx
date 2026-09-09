@@ -76,7 +76,7 @@ export default function AboutPage() {
             <div className="space-y-3">
               {/* Instagram */}
               <a
-                href="https://instagram.com/Tini_troveke"
+                href="https://instagram.com/tini.troveke"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 text-sm text-brand-charcoal hover:text-brand-pink transition-colors"
@@ -90,7 +90,7 @@ export default function AboutPage() {
                 </div>
                 <div>
                   <p className="text-xs text-brand-muted">Instagram</p>
-                  <p className="font-medium">@Tini_troveke</p>
+                  <p className="font-medium">@Tini.troveke</p>
                 </div>
               </a>
 

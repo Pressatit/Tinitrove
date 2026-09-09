@@ -65,11 +65,11 @@ export default function AdminBanners() {
 
     setUploading(true)
     const filename = `banner-${Date.now()}.${file.name.split('.').pop()}`
-    const { error } = await supabase.storage.from('product-images').upload(filename, file)
+    const { error } = await supabase.storage.from('Tini-bucket').upload(filename, file)
 
-    if (error) { showToast('Upload failed', 'error'); setUploading(false); return }
+    if (error) {console.error('Banner insert error:', JSON.stringify(error, null, 2)); showToast('Upload failed', 'error'); setUploading(false); return }
 
-    const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(filename)
+    const { data: { publicUrl } } = supabase.storage.from('Tini-bucket').getPublicUrl(filename)
     setNewUrl(publicUrl)
     setUploading(false)
     showToast('Image uploaded', 'success')
@@ -86,6 +86,7 @@ export default function AdminBanners() {
     })
 
     if (error) {
+      console.error('Banner insert error:', JSON.stringify(error, null, 2))
       showToast('Failed to add banner', 'error')
     } else {
       showToast('Banner added (set is_showing to display it)', 'success')

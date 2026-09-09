@@ -1,8 +1,11 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate,
+ } from 'react-router-dom'
+ import { useState,useEffect } from 'react'
 import { ChevronRight, Sparkles, Flame } from 'lucide-react'
 import { useProducts } from '@/hooks/useProduct'
 import ProductCard from '@/components/ui/productcard'
 import ProductCardSkeleton from '@/components/ui/productcardskeleton'
+import { supabase } from '@/lib/supabaseClient'
         
 
 
@@ -81,28 +84,52 @@ export default function HomePage() {
   const { products: hotProducts, loading: hotLoading } =
     useProducts({ is_hot_deal: true, limit: 4 })
 
+  const { products: allProducts, loading: allLoading } =
+    useProducts({ limit: 12})
+
+  const [activeBanner, setActiveBanner] = useState<{ image_url: string, title: string | null } | null>(null)
+
+  useEffect(() => {
+    const fetchActiveBanner = async () => {
+      const { data } = await supabase
+        .from('banners')
+        .select('image_url, title')
+        .eq('is_showing', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle() // Use maybeSingle to prevent errors if no banner is active
+
+      if (data) {
+        setActiveBanner(data)
+      }
+    }
+
+    fetchActiveBanner()
+  }, [])
+
+
   return (
     <div className="py-4 space-y-8">
 
       {/* ── Hero banner ───────────────────────────────────── */}
       {/* Dark rounded rectangle from wireframe */}
-      <div className="
-        w-full rounded-2xl overflow-hidden
-        bg-brand-charcoal
-        aspect-[16/7] lg:aspect-[16/5]
-        flex items-center justify-center
-        relative
-      ">
-        {/* Placeholder text — replace with real banner image later */}
-        {/* To add a real image: set background-image or use an <img> tag */}
-        <div className="text-center text-white/60 space-y-1">
-          <p className="text-sm">Banner of products</p>
-          <p className="text-xs">Upload a banner image in Supabase Storage</p>
+      {activeBanner ? (
+        <div className="w-full rounded-2xl overflow-hidden bg-brand-charcoal aspect-[16/7] lg:aspect-[16/5] relative">
+          <img 
+            src={activeBanner.image_url} 
+            alt={activeBanner.title ?? 'TiniTrove Banner'} 
+            className="w-full h-full object-cover"
+          />
         </div>
-
-        {/* Gradient overlay for when you add a real image */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none" />
-      </div>
+      ) : (
+        <div className="w-full rounded-2xl overflow-hidden bg-brand-charcoal aspect-[16/7] lg:aspect-[16/5] flex items-center justify-center relative">
+          <div className="text-center text-white/60 space-y-1">
+            <p className="text-sm">Banner of products</p>
+            <p className="text-xs">Upload a banner image in Supabase Storage</p>
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none" />
+        </div>
+      )}
 
       {/* ── New arrivals section ──────────────────────────── */}
       <section>
@@ -129,6 +156,21 @@ export default function HomePage() {
           loading={hotLoading}
           products={hotProducts}
           skeletonCount={2}
+        />
+      </section>
+
+      {/* ── All products section ──────────────────────────── */}
+
+      <section>
+        <SectionHeader
+          title="All products"
+          icon={Sparkles}
+          slug="all"      // Ensure you have a route set up for /category/all
+        />
+        <ProductGrid
+          loading={allLoading}
+          products={allProducts}
+          skeletonCount={8}
         />
       </section>
     </div>

@@ -103,6 +103,14 @@ function OrderCard({ order }: { order: Order }) {
         ──────────────────────────────────────────────────────────── */}
 
         {/* Desktop header — hidden on mobile */}
+        {order.payment_status == 'failed' &&
+          
+             <div className={`
+              text-xs items-center font-semibold px-3 py-1 rounded-full
+              ${order.payment_status === 'failed'          ? 'bg-red-50    text-red-400'    : ''}
+            `}>
+              {"Payment failed...try again"}
+            </div>}
         <div className="hidden lg:grid lg:grid-cols-5 gap-3 mb-4">
           {[
             { label: 'Order ref',     value: orderRef(order.id),                        bold: true  },
@@ -130,15 +138,24 @@ function OrderCard({ order }: { order: Order }) {
                 {orderRef(order.id)}
               </p>
             </div>
+            {order.payment_status == 'failed' &&
+          
+             <div className={`
+              text-xs font-semibold px-3 py-1 rounded-full
+              ${order.payment_status === 'failed'          ? 'bg-red-50    text-red-400'    : ''}
+            `}>
+              {"Payment failed"}
+            </div>}
             <div className={`
               text-xs font-semibold px-3 py-1 rounded-full
               ${order.status === 'completed'     ? 'bg-green-50  text-green-500'  : ''}
-              ${order.status === 'in_transit'    ? 'bg-yellow-50 text-yellow-600' : ''}
+              ${order.status === 'in_transit'    ? 'bg-yellow-50 text-cyan-600' : ''}
               ${order.status === 'to_be_shipped' ? 'bg-cyan-50   text-cyan-600'   : ''}
-              ${order.status === 'cart'          ? 'bg-red-50    text-red-400'    : ''}
+              ${order.status === 'cart'          ? 'bg-red-50    text-yellow-600'    : ''}
             `}>
               {label}
             </div>
+            
           </div>
 
           {/* Row 2: qty + amount + date in a tight strip */}
@@ -263,7 +280,7 @@ function OrderCard({ order }: { order: Order }) {
             </div>
 
             {/* Complete payment button — pending orders only */}
-            {order.payment_status === 'pending' || order.payment_status === 'failed' && (
+            {(order.payment_status === 'pending' || order.payment_status === 'failed') && (
               <div className="px-4 lg:px-5 pb-4 flex justify-end">
                 <button
                   onClick={()=>handleCompletePayment(order)}

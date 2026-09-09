@@ -14,6 +14,8 @@ import { useCart } from '@/hooks/useCart'
 import { useAuthStore } from '@/stores/authstore'
 import { useToastStore } from '@/stores/toaststore'
 import { supabase } from '@/lib/supabaseClient'
+import { useDeliveryFee } from '@/hooks/useDeliveryfee'
+
 
 // ── Kenya counties ────────────────────────────────────────────
 const COUNTIES = [
@@ -149,6 +151,10 @@ export default function CheckoutPage() {
   const [mpesaPhone, setMpesaPhone] = useState(profile?.phone ?? '')
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid' | 'failed'>('pending')
 
+  const { fee: deliveryFee, area:area, isServiceable, error: zoneError, loading: zoneLoading } =
+  useDeliveryFee(county)
+  
+  const orderTotal = totalPrice + (deliveryFee ?? 0)
 
 // Subscribe to real-time changes on the orders table for this order
   useEffect(() => {
@@ -225,7 +231,7 @@ export default function CheckoutPage() {
       .insert({
         user_id:          profile.id,
         status:           'cart',
-        total_amount:     totalPrice,
+        total_amount:     orderTotal,
         delivery_address: deliveryAddress,
         payment_status:   'pending',
       })
@@ -260,7 +266,7 @@ export default function CheckoutPage() {
     // Step 3: trigger M-Pesa STK push
     const orderId=order.id
     
-    triggerMpesaPayment(orderId,mpesaPhone,totalPrice)
+    triggerMpesaPayment(orderId,mpesaPhone,orderTotal)
     
     
 
@@ -304,7 +310,7 @@ export default function CheckoutPage() {
         
         {orderId && (
           <p className="text-xs text-brand-muted mt-2">
-            Order ref: <span className="font-mono text-brand-charcoal">{orderId.slice(0, 8).toUpperCase()}</span>
+            Order ref: <span className="font-mono text-brand-charcoal">{orderId.slice(-8).toUpperCase()}</span>
           </p>
         )}
       </div>
@@ -332,6 +338,7 @@ export default function CheckoutPage() {
       </div>
     </motion.div>
   )
+  
 }
 
   return (
@@ -439,22 +446,49 @@ export default function CheckoutPage() {
                     </select>
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-brand-muted text-xs">▾</span>
                   </div>
+
+
+            {county && !zoneLoading && (
+                 <div className={`
+                   flex items-center justify-between px-3 py-2 rounded-xl text-xs
+                   ${isServiceable
+                     ? deliveryFee === 0
+                       ? 'bg-green-50 text-green-600 border border-green-100'
+                       : 'bg-pink-50/60 text-brand-charcoal border border-pink-100'
+                     : 'bg-red-50 text-red-400 border border-red-100'}
+                 `}>
+                   {isServiceable ? (
+                     <>
+                       <span>Delivery to {county}{county === 'Kirinyaga' ? ' (Sagana)' : ''}</span>
+                       <span className="font-semibold">
+                         {deliveryFee === 0 ? 'FREE' : `KES ${deliveryFee}`}
+                       </span>
+                     </>
+                   ) : (
+                     <span>{zoneError}</span>
+                   )}
+                 </div>)}
                 </div>
 
                 {/* Street address */}
-                <div className="space-y-1.5">
-                  <label className="text-xs text-brand-muted">Street / estate / building</label>
-                  <input
-                    className={inputClass}
-                    value={address}
-                    onChange={e => setAddress(e.target.value)}
-                    placeholder="e.g. Kilimani, Lavington Road, Apt 4B"
-                  />
+               <div className="space-y-1.5">
+                  <label className="text-xs text-brand-muted">Town / Area</label>
+                  <div className={cn(
+                    inputClass, 
+                    "bg-gray-50/80 text-brand-charcoal select-none flex items-center font-medium",
+                    !county && "text-brand-muted font-normal italic"
+                  )}>
+                    {county ? (
+                      area || (zoneLoading ? "Fetching area..." : "Not specified")
+                    ) : (
+                      "Select a county to determine town"
+                    )}
+                  </div>
                 </div>
 
                 <Button
                   className="w-full mt-2"
-                  disabled={!fullName || !phone || !county || !address}
+                  disabled={!fullName || !phone || !county || !isServiceable}
                   onClick={() => setStep('payment')}
                 >
                   Continue to payment
@@ -511,7 +545,7 @@ export default function CheckoutPage() {
                 <div className="flex items-center justify-between py-2 border-t border-pink-100">
                   <span className="text-sm font-medium text-brand-charcoal">Total to pay</span>
                   <span className="text-lg font-semibold text-brand-charcoal">
-                    KES {totalPrice.toLocaleString('en-KE')}
+                    KES {orderTotal.toLocaleString('en-KE')}
                   </span>
                 </div>
 
@@ -528,7 +562,7 @@ export default function CheckoutPage() {
                   ) : (
                     <>
                       <CreditCard size={15} strokeWidth={1.5} />
-                      Pay KES {totalPrice.toLocaleString('en-KE')}
+                      Pay KES {orderTotal.toLocaleString('en-KE')}
                     </>
                   )}
                 </Button>
@@ -580,11 +614,11 @@ export default function CheckoutPage() {
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-brand-charcoal">Total</span>
               <span className="text-sm font-semibold text-brand-charcoal">
-                KES <NumberFlow value={totalPrice} />
+                KES <NumberFlow value={orderTotal} />
               </span>
             </div>
             <p className="text-[11px] text-brand-muted mt-1">
-              Delivery charges calculated at dispatch
+              Delivery charges added
             </p>
           </motion.div>
         </motion.div>
