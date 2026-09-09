@@ -144,7 +144,7 @@ export default function CheckoutPage() {
   )
   const [phone,     setPhone]     = useState(profile?.phone ?? '')
   const [county,    setCounty]    = useState(profile?.delivery_address ?? '')
-  const [address,   setAddress]   = useState('')
+
   
 
   // Payment
@@ -223,7 +223,7 @@ export default function CheckoutPage() {
 
     setSubmitting(true)
 
-    const deliveryAddress = `${fullName}, ${address}, ${county}`
+    const deliveryAddress = `${fullName}, ${county}`
 
     // Step 1: insert the order row
     const { data: order, error: orderError } = await supabase
@@ -537,7 +537,7 @@ export default function CheckoutPage() {
                 <div className="bg-pink-50/50 rounded-xl p-3 text-xs text-brand-muted space-y-1">
                   <p className="font-medium text-brand-charcoal text-xs mb-1">Delivering to:</p>
                   <p>{fullName}</p>
-                  <p>{address}, {county}</p>
+                  <p> {county}</p>
                   <p>{phone}</p>
                 </div>
 
