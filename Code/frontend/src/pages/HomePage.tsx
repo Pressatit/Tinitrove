@@ -114,15 +114,16 @@ export default function HomePage() {
       {/* ── Hero banner ───────────────────────────────────── */}
       {/* Dark rounded rectangle from wireframe */}
       {activeBanner ? (
-        <div className="w-full rounded-2xl overflow-hidden bg-brand-charcoal aspect-[16/7] lg:aspect-[16/5] relative">
+        
+        <div className="w-full rounded-2xl overflow-hidden relative bg-brand-charcoal">
           <img 
             src={activeBanner.image_url} 
             alt={activeBanner.title ?? 'TiniTrove Banner'} 
-            className="w-full h-full object-cover"
+            className="w-full h-auto block"
           />
         </div>
       ) : (
-        <div className="w-full rounded-2xl overflow-hidden bg-brand-charcoal aspect-[16/7] lg:aspect-[16/5] flex items-center justify-center relative">
+        <div className="w-full rounded-2xl overflow-hidden bg-brand-charcoal aspect-[16/5] flex items-center justify-center relative">
           <div className="text-center text-white/60 space-y-1">
             <p className="text-sm">Banner of products</p>
             <p className="text-xs">Upload a banner image in Supabase Storage</p>
