@@ -317,6 +317,19 @@ export default function SignUpPage() {
             </div>
           </div>
 
+          <div className="text-xs text-brand-muted text-center mt-2 mb-4">
+            By creating an account, you agree to TiniTrove's{' '}
+            <Link to="/terms-of-service" target="_blank" className="text-brand-pink hover:underline font-medium">
+              Terms of Service
+            </Link>{' '}
+            and{' '}
+            <Link to="/privacy-policy" target="_blank" className="text-brand-pink hover:underline font-medium">
+              Privacy Policy
+            </Link>.
+          </div>
+          
+
+
           {/* Submit */}
           <button
             type="submit"
@@ -331,6 +344,8 @@ export default function SignUpPage() {
               mt-2
             "
           >
+
+            
             {loading ? (
               <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (

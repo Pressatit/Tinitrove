@@ -15,6 +15,8 @@ import NotFoundPage from '@/pages/Notfound'
 
 import SignUpPage from './pages/SignUp'
 import LoginPage    from '@/pages/LoginPage'
+import TermsOfService from './pages/Terms'
+import PrivacyPolicy from './pages/Privacy'
 
 import RequireAuth from './components/auth/requireAuth'
 import { useAuth }    from '@/hooks/useAuth'
@@ -80,6 +82,10 @@ export default function App() {
          <Route path="/product/:id"    element={<ProductPage />} />
          <Route path="/category/:slug" element={<SearchPage />} />
          <Route path="/about"          element={<AboutPage />} />
+         <Route path="/privacy-policy" element={<PrivacyPolicy/>}/>
+         <Route path="/terms-of-service" element={<TermsOfService/>}/>
+         
+
 
         {/* Protected — must be logged in */}
         {/* RequireAuth redirects to /login if no session */}
