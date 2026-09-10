@@ -1,10 +1,9 @@
-import { useState,useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'motion/react'
 import NumberFlow from '@number-flow/react'
 import {
-  ShoppingCart, X, Minus, Plus, MapPin,
-  Phone, CreditCard, Loader2, ChevronLeft,
+  ShoppingCart, X, Minus, Plus, MapPin,Copy, Loader2, ChevronLeft,
   Package, CheckCircle
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -136,7 +135,7 @@ export default function CheckoutPage() {
 
   const [step,          setStep]          = useState<Step>('delivery')
   const [submitting,    setSubmitting]    = useState(false)
-  const [orderId,       setOrderId]       = useState<string | null>(null)
+  const [orderId,       setOrderId]       = useState<string >('')
 
   // Delivery form — pre-filled from profile
   const [fullName,  setFullName]  = useState(
@@ -148,46 +147,19 @@ export default function CheckoutPage() {
   
 
   // Payment
-  const [mpesaPhone, setMpesaPhone] = useState(profile?.phone ?? '')
-  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid' | 'failed'>('pending')
+  //const [mpesaPhone, setMpesaPhone] = useState(profile?.phone ?? '')
+  //const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid' | 'failed' | 'pending_verification'>('pending')
+  const [mpesaCode, setMpesaCode] = useState('')
+  const [copied,    setCopied]    = useState(false)
+
+  
 
   const { fee: deliveryFee, area:area, isServiceable, error: zoneError, loading: zoneLoading } =
   useDeliveryFee(county)
   
   const orderTotal = totalPrice + (deliveryFee ?? 0)
 
-// Subscribe to real-time changes on the orders table for this order
-  useEffect(() => {
-  if (!orderId || step !== 'confirmed') return
 
-  
-  const channel = supabase
-    .channel(`order-status-${orderId}`)
-    .on(
-      'postgres_changes',
-      {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'orders',
-        filter: `id=eq.${orderId}`,
-      },
-      (payload) => {
-        const updatedOrder = payload.new
-        if (updatedOrder.payment_status === 'paid') {
-          setPaymentStatus('paid')
-          showToast('Payment received successfully!', 'success')
-        } else if (updatedOrder.payment_status === 'failed') {
-          setPaymentStatus('failed')
-          showToast('M-Pesa payment failed or was cancelled.', 'error')
-        }
-      }
-    )
-    .subscribe()
-
-  return () => {
-    supabase.removeChannel(channel)
-  }
-}, [orderId, step])
 
   // ── If cart is empty redirect ─────────────────────────────
   if (items.length === 0 && step !== 'confirmed') {
@@ -200,18 +172,40 @@ export default function CheckoutPage() {
     )
   }
 
-  const triggerMpesaPayment = async (orderId: string, phone: string, amount: number) => {
-  const { data, error } = await supabase.functions.invoke('mpesaSTKPush', {
-    body: { orderId, phone, amount }
-  })
+  const handleSubmitMpesaCode = async (mpesaCode: string) => {
+    if (mpesaCode.length < 8) {
+      showToast('Please enter a valid M-Pesa code', 'error')
+      return
+    }
 
-  if (error || data.ResponseCode !== "0") {
-    showToast("Failed to send M-Pesa prompt", "error")
-    return
+    setSubmitting(true)
+
+    // Update the existing order we created in handlePlaceOrder
+    const { error } = await supabase
+      .from('orders')
+      .update({ 
+        mpesa_ref: mpesaCode.trim().toUpperCase(),
+        payment_status: 'pending_verification' // Flags it for you to check in the admin panel
+      })
+      .eq('id', orderId)
+
+    if (error) {
+      showToast('Failed to save M-Pesa code. Please try again.', 'error')
+      setSubmitting(false)
+      return
+    }
+
+    // Now that payment is logged, clear the cart and show the success screen
+    await clearCart()
+    setStep('confirmed')
+    setSubmitting(false)
   }
 
-  showToast("Check your phone to enter M-Pesa PIN!", "success")
-}
+const handleCopyTill = () => {
+    navigator.clipboard.writeText('1214248')
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   // ── Create order in Supabase ──────────────────────────────
   const handlePlaceOrder = async () => {
@@ -266,79 +260,73 @@ export default function CheckoutPage() {
     // Step 3: trigger M-Pesa STK push
     const orderId=order.id
     
-    triggerMpesaPayment(orderId,mpesaPhone,orderTotal)
-    
-    
-
-    // Step 4: clear cart (DB + store) and show confirmation
-    setOrderId(order.id)
-    await clearCart()
-    setStep('confirmed')
+    setOrderId(orderId)
+    setStep('payment') // Change your UI state to show the M-Pesa instructions
     setSubmitting(false)
+    
   }
+
+  
 
   // ── Confirmed screen ──────────────────────────────────────
   if (step === 'confirmed') {
-    return (
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.97 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="py-12 flex flex-col items-center gap-5 text-center max-w-sm mx-auto"
+    >
       <motion.div
-        initial={{ opacity: 0, scale: 0.97 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="py-12 flex flex-col items-center gap-5 text-center max-w-sm mx-auto"
-      >
-        <motion.div
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-        className={cn(
-          "w-20 h-20 rounded-full flex items-center justify-center",
-          paymentStatus === 'paid' && "bg-green-50",
-          paymentStatus === 'pending' && "bg-amber-50",
-          paymentStatus === 'failed' && "bg-red-50"
-        )}
+        transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.1 }}
+        className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center"
       >
-        {paymentStatus === 'paid' && <CheckCircle size={40} className="text-green-500" />}
-        {paymentStatus === 'pending' && <Loader2 size={40} className="text-amber-500 animate-spin" />}
-        {paymentStatus === 'failed' && <X size={40} className="text-red-500" />}
+        <CheckCircle size={40} strokeWidth={1.5} className="text-green-500" />
       </motion.div>
 
-        <div className="space-y-1">
-        <h2 className="font-display text-2xl text-brand-charcoal">
-          {paymentStatus === 'paid' && "Payment Confirmed!"}
-          {paymentStatus === 'pending' && "Waiting for M-Pesa Confirmation…"}
-          {paymentStatus === 'failed' && "Payment Failed"}
-        </h2>
-        
+      <div className="space-y-1">
+        <h2 className="font-display text-2xl text-brand-charcoal">Order received! </h2>
+        <p className="text-sm text-brand-muted">
+          We've received your order and M-Pesa reference.
+        </p>
         {orderId && (
-          <p className="text-xs text-brand-muted mt-2">
-            Order ref: <span className="font-mono text-brand-charcoal">{orderId.slice(-8).toUpperCase()}</span>
+          <p className="text-xs text-brand-muted mt-2 font-mono">
+            Order ref: {orderId.slice(0, 8).toUpperCase()}
           </p>
         )}
       </div>
 
-      <p className="text-xs text-brand-muted px-4 leading-relaxed">
-        {paymentStatus === 'paid' && "Your payment has been received and your order is being processed!"}
-        {paymentStatus === 'pending' && "Check your phone and enter your M-Pesa PIN to complete the transaction."}
-        {paymentStatus === 'failed' && "The transaction was cancelled or failed. You can try again from your orders page."}
+      <div className="bg-yellow-50 border border-yellow-100 rounded-2xl p-4 text-left w-full">
+        <p className="text-xs font-semibold text-yellow-700 mb-2">What happens next:</p>
+        <ol className="space-y-1.5 text-xs text-yellow-800">
+          <li>1. We verify your M-Pesa payment (within 1 hour)</li>
+          <li>2. Your order status updates to confirmed</li>
+          <li>3. We dispatch your items and notify you</li>
+          <li>4. Track your order in the Orders tab</li>
+        </ol>
+      </div>
+
+      <p className="text-xs text-brand-muted">
+        Questions? WhatsApp us at{' '}
+        <a
+          href="https://wa.me/254111970400"
+          className="text-brand-pink hover:underline"
+        >
+          0111970400
+        </a>
       </p>
 
-        <div className="flex gap-3 w-full">
-        <Button
-          variant="outline"
-          className="flex-1"
-          onClick={() => navigate('/orders')}
-        >
+      <div className="flex gap-3 w-full">
+        <Button variant="outline" className="flex-1" onClick={() => navigate('/orders')}>
           View orders
         </Button>
-        <Button
-          className="flex-1"
-          onClick={() => navigate('/')}
-        >
+        <Button className="flex-1" onClick={() => navigate('/')}>
           Keep shopping
         </Button>
       </div>
     </motion.div>
   )
-  
 }
 
   return (
@@ -488,86 +476,73 @@ export default function CheckoutPage() {
 
                 <Button
                   className="w-full mt-2"
-                  disabled={!fullName || !phone || !county || !isServiceable}
-                  onClick={() => setStep('payment')}
+                  disabled={!fullName || !phone || !county || !isServiceable || submitting}
+                  onClick={handlePlaceOrder} 
                 >
-                  Continue to payment
+                  {submitting ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 size={16} className="animate-spin" />
+                      Creating Order...
+                    </div>
+                  ) : (
+                    'Place Order & Pay'
+                  )}
                 </Button>
               </motion.div>
             )}
 
             {/* ── STEP 2: Payment ──────────────────────────── */}
             {step === 'payment' && (
-              <motion.div
-                key="payment"
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.2 }}
-                className="bg-white rounded-2xl border border-pink-100 p-5 space-y-4"
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <Phone size={16} strokeWidth={1.5} className="text-brand-pink" />
-                  <h3 className="text-sm font-medium text-brand-charcoal">
-                    Pay via M-Pesa
-                  </h3>
-                </div>
+        <div className="bg-white p-6 rounded-2xl border border-pink-100 max-w-md mx-auto mt-8">
+          <h2 className="font-display text-xl text-brand-charcoal mb-4">Pay via M-Pesa</h2>
+          
+          <div className="bg-brand-cream p-4 rounded-xl space-y-3 text-sm text-brand-charcoal mb-6">
+            <p>1. Go to M-Pesa on your phone</p>
+            <p>2. Select <strong>Lipa na M-Pesa &gt; Buy Goods and Services</strong></p>
+            <div className="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-pink-100">
+              <p>3. Enter Till: <strong className="text-brand-pink text-lg tracking-widest">1685033</strong></p>
+              <button onClick={handleCopyTill} type="button" className="text-brand-muted hover:text-brand-pink transition-colors">
+                {copied ? <CheckCircle size={18} className="text-green-500"/> : <Copy size={18} />}
+              </button>
+            </div>
+            {/* Using orderTotal from your existing state */}
+            <p>4. Enter Amount: <strong>KES {orderTotal}</strong></p>
+            <p>5. Enter your M-Pesa PIN</p>
+          </div>
 
-                {/* M-Pesa explainer */}
-                <div className="bg-green-50 border border-green-100 rounded-xl p-3 text-xs text-green-700 leading-relaxed">
-                  Enter the phone number registered with M-Pesa. You'll receive a payment prompt — enter your PIN to complete the order.
-                </div>
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault()
+              handleSubmitMpesaCode(mpesaCode)
+            }} 
+            className="space-y-4"
+          >
+            <div>
+              <label className="text-xs font-medium text-brand-muted mb-1 block">
+                M-Pesa Transaction Code
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. TK12ABCDE"
+                value={mpesaCode}
+                onChange={(e) => setMpesaCode(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-pink-100 uppercase focus:border-brand-pink focus:ring-2 focus:ring-brand-pink/20 outline-none transition-all"
+              />
+            </div>
 
-                {/* M-Pesa phone */}
-                <div className="space-y-1.5">
-                  <label className="text-xs text-brand-muted">M-Pesa phone number</label>
-                  <input
-                    className={inputClass}
-                    value={mpesaPhone}
-                    onChange={e => setMpesaPhone(e.target.value)}
-                    placeholder="0712 345 678"
-                    type="tel"
-                  />
-                  <p className="text-[11px] text-brand-muted">
-                    Safaricom numbers only (07xx or 01xx)
-                  </p>
-                </div>
-
-                {/* Delivery summary */}
-                <div className="bg-pink-50/50 rounded-xl p-3 text-xs text-brand-muted space-y-1">
-                  <p className="font-medium text-brand-charcoal text-xs mb-1">Delivering to:</p>
-                  <p>{fullName}</p>
-                  <p> {county}</p>
-                  <p>{phone}</p>
-                </div>
-
-                {/* Amount to pay */}
-                <div className="flex items-center justify-between py-2 border-t border-pink-100">
-                  <span className="text-sm font-medium text-brand-charcoal">Total to pay</span>
-                  <span className="text-lg font-semibold text-brand-charcoal">
-                    KES {orderTotal.toLocaleString('en-KE')}
-                  </span>
-                </div>
-
-                <Button
-                  className="w-full gap-2"
-                  disabled={submitting || !mpesaPhone}
-                  onClick={handlePlaceOrder}
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 size={15} strokeWidth={2} className="animate-spin" />
-                      Sending prompt…
-                    </>
-                  ) : (
-                    <>
-                      <CreditCard size={15} strokeWidth={1.5} />
-                      Pay KES {orderTotal.toLocaleString('en-KE')}
-                    </>
-                  )}
-                </Button>
-              </motion.div>
-            )}
+            <button
+              type="submit"
+              // Using submitting from your existing state
+              disabled={submitting || mpesaCode.length < 8}
+              className="w-full py-3.5 bg-brand-charcoal text-white rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-brand-charcoal/90 disabled:opacity-50 transition-colors"
+            >
+              {submitting && <Loader2 size={16} strokeWidth={2} className="animate-spin" />}
+              {submitting ? 'Verifying...' : 'Confirm Payment'}
+            </button>
+          </form>
+        </div>
+      )}
           </AnimatePresence>
         </div>
 

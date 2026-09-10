@@ -17,7 +17,7 @@ interface AdminOrder {
 }
 
 const STATUS_OPTIONS = ['cart', 'in_transit', 'to_be_shipped', 'completed']
-const PAYMENT_OPTIONS = ['pending', 'paid', 'failed']
+const PAYMENT_OPTIONS = ['pending', 'paid', 'failed','pending_verification']
 
 const STATUS_COLORS: Record<string, string> = {
   cart:          'bg-red-50 text-red-400',
@@ -29,6 +29,7 @@ const PAYMENT_COLORS: Record<string, string> = {
   pending: 'bg-orange-50 text-orange-500',
   paid:    'bg-green-50 text-green-600',
   failed:  'bg-red-50 text-red-400',
+  pending_verification: 'bg-orange-50 text-orange-500',
 }
 
 export default function AdminOrders() {

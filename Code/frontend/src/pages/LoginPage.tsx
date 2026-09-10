@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Mail, Lock, LogIn, Eye, EyeOff } from 'lucide-react'
+import { Mail, Lock, LogIn, Eye, EyeOff,Gift } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { useToastStore } from '@/stores/toaststore'
 
@@ -55,7 +55,9 @@ export default function LoginPage() {
 
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="font-display text-3xl tracking-tight">TiniTrove 🎀</h1>
+          <h1 className="flex items-center justify-center gap-1 font-display leading-none text-3xl tracking-tight">
+            <Gift size={24} className='text-brand-pink' strokeWidth={2} />
+            TiniTrove </h1>
           <p className="text-xs text-brand-muted italic mt-1.5">
          _____
           </p>

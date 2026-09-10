@@ -22,7 +22,7 @@ interface Order {
   id:               string
   status:           'cart' | 'in_transit' | 'to_be_shipped' | 'completed'
   total_amount:     number
-  payment_status:   'pending' | 'paid' | 'failed'
+  payment_status:   'pending' | 'paid' | 'failed' | 'pending_verification'
   delivery_address: string
   created_at:       string
   order_items:      OrderItem[]
