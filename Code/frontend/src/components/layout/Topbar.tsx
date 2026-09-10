@@ -37,7 +37,7 @@ export default function TopBar() {
       TiniTrove 
     </h1>
           <p className="text-xs text-brand-muted italic mt-1.5">
-            Curated gifts and cute aestheic finds
+            Curated gifts and cute aesthetic finds
           </p>
         </Link>
       </div>
