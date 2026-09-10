@@ -16,9 +16,9 @@ export default function TopBar() {
              <Gift size={20} className='text-brand-pink' strokeWidth={2} />
             TiniTrove </h1>
           <p className="text-xs text-brand-muted italic mt-2">
-            Curated gifts and cute aestheic finds
+            Curated gifts and cute aesthetic finds
           </p>
-        </Link>
+        </Link> 
         {/* Hamburger — mobile only */}
         <button
           onClick={toggle}
