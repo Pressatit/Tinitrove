@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 
 // ── SET YOUR LAUNCH DATE HERE ─────────────────────────────────
 // Format: 'YYYY-MM-DDTHH:MM:SS+03:00' (Kenya UTC+3)
-const LAUNCH_DATE = new Date('2026-09-10T09:00:00+03:00')
+const LAUNCH_DATE = new Date('2026-09-10T11:00:00+03:00')
 // ─────────────────────────────────────────────────────────────
 
 interface TimeLeft {
