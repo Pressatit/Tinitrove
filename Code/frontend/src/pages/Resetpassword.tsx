@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Lock, Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react'
+import { Lock,Gift, Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { useToastStore } from '@/stores/toaststore'
 
@@ -17,22 +17,44 @@ export default function ResetPassword() {
   const [checking,   setChecking]   = useState(true)
 
   useEffect(() => {
-    // Supabase fires onAuthStateChange with event 'PASSWORD_RECOVERY'
-    // when the user arrives from the reset email link
-    // This confirms the link is valid before showing the form
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event) => {
-        if (event === 'PASSWORD_RECOVERY') {
-          setValidLink(true)
-        }
-        setChecking(false)
-      }
-    )
 
-    // Safety timeout — if no event fires in 3s, link is invalid
-    const timeout = setTimeout(() => setChecking(false), 100000)
+    let isMounted = true
+
+    const verifyAccess = async () => {
+      // 1. Did the global Supabase client already process the token and log us in?
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session && isMounted) {
+        setValidLink(true)
+        setChecking(false)
+        return
+      }
+
+      // 2. Is the token still in the URL (hasn't been processed yet)?
+      if (window.location.hash.includes('type=recovery') || window.location.search.includes('code=')) {
+        if (isMounted) {
+          setValidLink(true)
+          setChecking(false)
+        }
+        return
+      }
+    }
+
+    verifyAccess()
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
+        if (isMounted) {
+          setValidLink(true)
+          setChecking(false)
+        }
+      }
+    })
+
+    // Safety timeout — if no event fires in 10s, link is invalid
+    const timeout = setTimeout(() => setChecking(false), 10000)
 
     return () => {
+      isMounted=false
       subscription.unsubscribe()
       clearTimeout(timeout)
     }
@@ -114,11 +136,11 @@ export default function ResetPassword() {
 
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="font-display text-3xl tracking-tight text-brand-charcoal">
-            TiniTrove 🎀
-          </h1>
+          <h1 className="flex items-center justify-center gap-1 font-display text-2xl tracking-tight leading-none">
+             <Gift size={20} className='text-brand-pink' strokeWidth={2} />
+            TiniTrove </h1>
           <p className="text-xs text-brand-muted italic mt-1.5">
-            Get it for them or …practice self love
+            -------
           </p>
         </div>
 

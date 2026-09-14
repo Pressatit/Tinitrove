@@ -14,9 +14,13 @@ export default function ForgotPassword() {
     setLoading(true)
     setError(null)
 
+    const redirectUrl = window.location.origin.includes('localhost') 
+      ? `${window.location.origin}/reset-password`
+      : 'https://www.tinitrove.co.ke/reset-password'
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       // After clicking the link in email, user lands here
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: redirectUrl,
     })
 
     if (error) {

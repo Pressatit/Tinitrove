@@ -13,9 +13,16 @@ export function useAuth() {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single()
+        .maybeSingle()
+
+      if (!data) {
+      await supabase.auth.signOut() // Clears the bad local storage
+      window.location.href = '/login' // Boots them out
+      return
+      }
 
       if (cancelled) return
+
       if (error) {
         console.warn('Profile fetch skipped or missing, keeping user session active.', error)
         setProfile(null)
