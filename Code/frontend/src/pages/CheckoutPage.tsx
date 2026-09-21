@@ -202,7 +202,7 @@ export default function CheckoutPage() {
   }
 
 const handleCopyTill = () => {
-    navigator.clipboard.writeText('1214248')
+    navigator.clipboard.writeText('1685033')
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }

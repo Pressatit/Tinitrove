@@ -1,19 +1,39 @@
 import { useEffect, useState } from 'react'
-import { Search, Loader2 } from 'lucide-react'
+import { Search, Loader2,ChevronDown,Package } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { useToastStore } from '@/stores/toaststore'
 import { useDebounce } from '@/hooks/useDebounce'
 
+
 interface AdminOrder {
-  id:               string
-  user_id:          string
-  status:           string
-  total_amount:     number
-  payment_status:   string
-  delivery_address: string
-  created_at:       string
-  profiles: { first_name: string | null; email: string } | null
-  item_count: number
+  id: string;
+  user_id: string | null;
+  created_at: string;
+  status: string;
+  payment_status: string;
+  total_amount: number;
+  item_count: number;
+  mpesa_ref: string | null;
+  delivery_address: string | null;
+
+  // Nested profile data
+  profiles?: {
+    first_name: string | null;
+    email: string | null;
+    phone:number | null;
+  } | null;
+
+  // Nested order items with product data
+  order_items?: {
+    id: string;
+    quantity: number;
+    unit_price: number;
+    color_selected: string | null;
+    product?: {
+      name: string;
+      image_urls: string[];
+    } | null;
+  }[];
 }
 
 const STATUS_OPTIONS = ['cart', 'in_transit', 'to_be_shipped', 'completed']
@@ -30,6 +50,99 @@ const PAYMENT_COLORS: Record<string, string> = {
   paid:    'bg-green-50 text-green-600',
   failed:  'bg-red-50 text-red-400',
   pending_verification: 'bg-orange-50 text-orange-500',
+}
+export function AdminOrderRow({ order, children }:{order:AdminOrder,children:React.ReactNode}) {
+  const [expanded, setExpanded] = useState(false)
+
+  return (
+    <>
+      {/* Main Table Row - Must be a native <tr> without margins or block styling */}
+      <tr 
+        onClick={() => setExpanded(!expanded)}
+        className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors cursor-pointer bg-white"
+      >
+        {children}
+        
+        {/* The 9th column matching the empty '' in your header array */}
+        <td className="px-4 py-3 text-right text-brand-muted">
+          <ChevronDown 
+            size={16} 
+            className={`transform transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} 
+          />
+        </td>
+      </tr>
+
+      {/* Expanded Details Row */}
+      {expanded && (
+        <tr>
+          {/* colSpan=9 ensures the dropdown pane stretches entirely across all table columns */}
+          <td colSpan={9} className="p-0 bg-gray-50/40 border-b border-gray-200">
+            {/* Inner div handles the padding and max-width without breaking the table */}
+            <div className="p-6 max-w-4xl mx-auto">
+              
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-sm font-medium text-brand-charcoal">Order Items</h4>
+                {order.mpesa_ref && (
+                  <div className="text-xs">
+                    <span className="text-brand-muted">M-Pesa Ref: </span>
+                    <span className="font-mono font-medium text-brand-charcoal bg-white border border-gray-200 px-2 py-1 rounded">
+                      {order.mpesa_ref}
+                    </span>
+                  </div>
+                )}
+              </div>
+              
+              <div className="grid gap-3">
+                {order.order_items && order.order_items.length > 0 ? (
+                  order.order_items.map((item) => (
+                    <div key={item.id} className="flex items-center gap-4 bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                      <div className="w-12 h-12 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
+                        {item.product?.image_urls?.[0] ? (
+                          <img 
+                            src={item.product.image_urls[0]} 
+                            alt={item.product.name} 
+                            className="w-full h-full object-cover" 
+                          />
+                        ) : (
+                          <Package size={20} className="text-gray-300"/>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-brand-charcoal">
+                          {item.product?.name || 'Unknown Product'}
+                        </p>
+                        <p className="text-xs text-brand-muted mt-0.5">
+                          {item.color_selected && `Color: ${item.color_selected} | `}Qty: {item.quantity}
+                        </p>
+                      </div>
+                      <div className="text-sm font-medium text-brand-charcoal">
+                        KES {(item.unit_price * item.quantity).toLocaleString('en-KE')}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-sm text-brand-muted italic py-2">
+                    No items found.
+                  </div>
+                )}
+              </div>
+
+              {/* Delivery Address */}
+              {order.delivery_address && (
+                <div className="mt-5 pt-4 border-t border-gray-200/60">
+                  <h4 className="text-xs font-medium text-brand-charcoal mb-1.5">Delivery Details</h4>
+                  <p className="text-sm text-brand-muted leading-relaxed">
+                    {order.delivery_address}
+                  </p>
+                </div>
+              )}
+              
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
+  )
 }
 
 export default function AdminOrders() {
@@ -49,15 +162,12 @@ export default function AdminOrders() {
   const { data, error } = await supabase
     .from('orders')
     .select(`
-      id, 
-      user_id, 
-      status, 
-      total_amount,
-      payment_status, 
-      delivery_address, 
-      created_at,
-      profiles!user_id ( first_name, email ),
-      order_items!order_id ( id )
+      *,
+      profiles:user_id ( first_name, email ,phone ),
+      order_items (
+        *,
+        product:product_id ( name, image_urls )
+      )
     `)
     .order('created_at', { ascending: false })
 
@@ -165,66 +275,69 @@ export default function AdminOrders() {
                     </tr>
                   ))
                 : orders.map((order, index) => (
-                    <tr key={order.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                      <td className="px-4 py-3 text-brand-muted text-xs">{index + 1}</td>
-                      <td className="px-4 py-3 font-mono text-xs text-brand-charcoal">
-                        {order.id.replace(/-/g, '').slice(-8).toUpperCase()}
-                      </td>
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-brand-charcoal text-xs whitespace-nowrap">
-                          {order.profiles?.first_name ?? 'Unknown'}
-                        </p>
-                        <p className="text-brand-muted text-[10px]">
-                          {order.profiles?.email}
-                        </p>
-                      </td>
-                      <td className="px-4 py-3 text-center text-brand-charcoal">
-                        {order.item_count}
-                      </td>
-                      <td className="px-4 py-3 text-brand-charcoal whitespace-nowrap">
-                        KES {order.total_amount.toLocaleString('en-KE')}
-                      </td>
-                      {/* Inline status dropdown */}
-                      <td className="px-4 py-3">
-                        {updating === order.id + 'status'
-                          ? <Loader2 size={14} className="animate-spin text-brand-muted" />
-                          : (
-                            <select
-                              value={order.status}
-                              onChange={e => updateStatus(order.id, 'status', e.target.value)}
-                              className={`${selectClass} ${STATUS_COLORS[order.status]}`}
-                            >
-                              {STATUS_OPTIONS.map(s => (
-                                <option key={s} value={s}>{s.replace('_', ' ')}</option>
-                              ))}
-                            </select>
-                          )
-                        }
-                      </td>
-                      {/* Inline payment status dropdown */}
-                      <td className="px-4 py-3">
-                        {updating === order.id + 'payment_status'
-                          ? <Loader2 size={14} className="animate-spin text-brand-muted" />
-                          : (
-                            <select
-                              value={order.payment_status}
-                              onChange={e => updateStatus(order.id, 'payment_status', e.target.value)}
-                              className={`${selectClass} ${PAYMENT_COLORS[order.payment_status]}`}
-                            >
-                              {PAYMENT_OPTIONS.map(s => (
-                                <option key={s} value={s}>{s}</option>
-                              ))}
-                            </select>
-                          )
-                        }
-                      </td>
-                      <td className="px-4 py-3 text-brand-muted text-xs whitespace-nowrap">
-                        {new Date(order.created_at).toLocaleDateString('en-KE', {
-                          day: 'numeric', month: 'short', year: 'numeric'
-                        })}
-                      </td>
-                    </tr>
-                  ))
+    <AdminOrderRow key={order.id} order={order}>
+      <td className="px-4 py-3 text-brand-muted text-xs">{index + 1}</td>
+      <td className="px-4 py-3 font-mono text-xs text-brand-charcoal">
+        {order.id.replace(/-/g, '').slice(-8).toUpperCase()}
+      </td>
+      <td className="px-4 py-3">
+        <p className="font-medium text-brand-charcoal text-xs whitespace-nowrap">
+          {order.profiles?.first_name ?? 'Unknown'}
+        </p>
+        <p className="text-brand-muted text-[10px]">
+          {order.profiles?.email}
+        </p>
+      </td>
+      <td className="px-4 py-3 text-center text-brand-charcoal">
+        {order.item_count}
+      </td>
+      <td className="px-4 py-3 text-brand-charcoal whitespace-nowrap">
+        KES {order.total_amount.toLocaleString('en-KE')}
+      </td>
+      
+      {/* Inline status dropdown */}
+      <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+        {updating === order.id + 'status'
+          ? <Loader2 size={14} className="animate-spin text-brand-muted" />
+          : (
+            <select
+              value={order.status}
+              onChange={e => updateStatus(order.id, 'status', e.target.value)}
+              className={`${selectClass} ${STATUS_COLORS[order.status]}`}
+            >
+              {STATUS_OPTIONS.map(s => (
+                <option key={s} value={s}>{s.replace('_', ' ')}</option>
+              ))}
+            </select>
+          )
+        }
+      </td>
+      
+      {/* Inline payment status dropdown */}
+      <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+        {updating === order.id + 'payment_status'
+          ? <Loader2 size={14} className="animate-spin text-brand-muted" />
+          : (
+            <select
+              value={order.payment_status}
+              onChange={e => updateStatus(order.id, 'payment_status', e.target.value)}
+              className={`${selectClass} ${PAYMENT_COLORS[order.payment_status]}`}
+            >
+              {PAYMENT_OPTIONS.map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          )
+        }
+      </td>
+      
+      <td className="px-4 py-3 text-brand-muted text-xs whitespace-nowrap">
+        {new Date(order.created_at).toLocaleDateString('en-KE', {
+          day: 'numeric', month: 'short', year: 'numeric'
+        })}
+      </td>
+    </AdminOrderRow>
+  ))
               }
             </tbody>
           </table>
