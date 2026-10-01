@@ -7,6 +7,7 @@ import { useAuthStore } from '@/stores/authstore'
 import { useToastStore } from '@/stores/toaststore'
 import { useCart } from '@/hooks/useCart'
 
+
 interface OrderItem {
   id:             string
   product_id:     string
@@ -58,6 +59,7 @@ function OrderCard({ order }: { order: Order }) {
   const [submitting, setSubmitting]=useState(false)
   const { clearCart } = useCart()
   const [mpesaCode, setMpesaCode] = useState('')
+  const navigate=useNavigate();
 
 
   const handleCopyTill = () => {
@@ -70,16 +72,20 @@ function OrderCard({ order }: { order: Order }) {
   
   //const profile =useAuthStore((s)=>s.profile)
 
-  const { label, color } = STATUS_STYLES[order.status]
+  let displayLabel = STATUS_STYLES[order.status].label
+  let displayColor = STATUS_STYLES[order.status].color
+
+  //If they submitted an M-Pesa code, force the UI to show verification status
+  if (order.payment_status === 'pending_verification') {
+    displayLabel = 'Verifying Payment'
+    displayColor = 'text-orange-500' 
+  }
+
   const totalQty = order.order_items.reduce((sum, i) => sum + i.quantity, 0)
 
   const handleCompletePayment = async () => {
-  
   setPaying(true)
-  
-  
   showToast('Initiating payment…', 'info')
-
   setStep("payment")
 }
 
@@ -108,9 +114,12 @@ const handleSubmitMpesaCode = async (mpesaCode: string) => {
 
     // Now that payment is logged, clear the cart and show the success screen
     await clearCart()
+    setPaying(false)
     setStep('confirmed')
     setSubmitting(false)
   }
+
+  
 
   return (
     <motion.div
@@ -140,12 +149,12 @@ const handleSubmitMpesaCode = async (mpesaCode: string) => {
             { label: 'Order ref',     value: orderRef(order.id),                        bold: true  },
             { label: 'Item quantity', value: String(totalQty),                           bold: true  },
             { label: 'Total amount',  value: order.total_amount.toLocaleString('en-KE'), bold: true  },
-            { label: 'Status',        value: label,                                      status: true },
+            { label: 'Status',        value: displayLabel,                                      status: true },
             { label: 'Created on',    value: formatDate(order.created_at),               bold: false },
           ].map(({ label: l, value, status }) => (
             <div key={l} className="text-center">
               <p className="text-xs text-brand-muted mb-0.5">{l}</p>
-              <p className={`font-display text-xl font-semibold ${status ? color : 'text-brand-charcoal'}`}>
+              <p className={`font-display text-xl font-semibold ${status ? displayColor : 'text-brand-charcoal'}`}>
                 {value}
               </p>
             </div>
@@ -177,7 +186,7 @@ const handleSubmitMpesaCode = async (mpesaCode: string) => {
               ${order.status === 'to_be_shipped' ? 'bg-cyan-50   text-cyan-600'   : ''}
               ${order.status === 'cart'          ? 'bg-red-50    text-yellow-600'    : ''}
             `}>
-              {label}
+              {displayLabel}
             </div>
             
           </div>
@@ -329,6 +338,7 @@ const handleSubmitMpesaCode = async (mpesaCode: string) => {
           </motion.div>
         )}
       </AnimatePresence>
+
        {step === 'payment' && (
         <div className="bg-white p-6 rounded-2xl border border-pink-100 max-w-md mx-auto mt-8">
           <h2 className="font-display text-xl text-brand-charcoal mb-4">Pay via M-Pesa</h2>
@@ -381,6 +391,65 @@ const handleSubmitMpesaCode = async (mpesaCode: string) => {
           </form>
         </div>
       )}
+
+      {step == "confirmed" &&
+
+    <motion.div
+      initial={{ opacity: 0, scale: 0.97 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="py-12 flex flex-col items-center gap-5 text-center max-w-sm mx-auto"
+    >
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.1 }}
+        className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center"
+      >
+        <CheckCircle size={40} strokeWidth={1.5} className="text-green-500" />
+      </motion.div>
+
+      <div className="space-y-1">
+        <h2 className="font-display text-2xl text-brand-charcoal">Order received! </h2>
+        <p className="text-sm text-brand-muted">
+          We've received your order and M-Pesa reference.
+        </p>
+        {order.id && (
+          <p className="text-xs text-brand-muted mt-2 font-mono">
+            Order ref: {order.id.slice(0, 8).toUpperCase()}
+          </p>
+        )}
+      </div>
+
+      <div className="bg-yellow-50 border border-yellow-100 rounded-2xl p-4 text-left w-full">
+        <p className="text-xs font-semibold text-yellow-700 mb-2">What happens next:</p>
+        <ol className="space-y-1.5 text-xs text-yellow-800">
+          <li>1. We verify your M-Pesa payment (within 1 hour)</li>
+          <li>2. Your order status updates to confirmed</li>
+          <li>3. We dispatch your items and notify you</li>
+          <li>4. Track your order in the Orders tab</li>
+        </ol>
+      </div>
+
+      <p className="text-xs text-brand-muted">
+        Questions? WhatsApp us at{' '}
+        <a
+          href="https://wa.me/254111970400"
+          className="text-brand-pink hover:underline"
+        >
+          0111970400
+        </a>
+      </p>
+
+      <div className="flex gap-3 w-full">
+        <button className="flex-1" onClick={() => navigate('/')}>
+          Keep shopping
+        </button>
+      </div>
+    </motion.div>
+  
+} 
+
+      
     </motion.div>
   )
 }

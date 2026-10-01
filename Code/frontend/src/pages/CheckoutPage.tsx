@@ -303,7 +303,7 @@ const handleCopyTill = () => {
           <li>1. We verify your M-Pesa payment (within 1 hour)</li>
           <li>2. Your order status updates to confirmed</li>
           <li>3. We dispatch your items and notify you</li>
-          <li>4. Track your order in the Orders tab</li>
+          <li>4. Track your order in the <a className="underlined text-blue-500" href='/orders'>Order</a> tab</li>
         </ol>
       </div>
 
