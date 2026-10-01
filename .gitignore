@@ -6,6 +6,7 @@
 # Backup code and old Python virtual environments
 Tini/
 tinitrove/
+img/
 
 # Private local environment variables
 **/.env
