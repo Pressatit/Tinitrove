@@ -113,7 +113,7 @@ export default function HomePage() {
     <div className="py-4 space-y-8">
 
       <SEO 
-        title="Curated Aesthetic Gifts in Kenya" 
+        title="Tinitrove" 
         description="Discover aesthetic gifts, tech accessories, lamps, and self-care finds at TiniTrove. Nationwide delivery in Kenya." 
         path="/"
       />
