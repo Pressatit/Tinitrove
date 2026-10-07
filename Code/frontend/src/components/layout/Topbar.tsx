@@ -3,7 +3,7 @@ import { useUiStore } from '@/stores/uistore'
 import { Menu , Gift} from 'lucide-react'
 
 const CATEGORIES = [
-  'New arrivals','Hot products','Fans','Skin care','Lamps','Lighters','Jewellery'
+  'New arrivals','Hot products','Fans','Skin care','Collectibles','Lighters','Jewellery'
 ]
 
 export default function TopBar() {

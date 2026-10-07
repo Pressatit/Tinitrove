@@ -1,5 +1,9 @@
 {
   "dependencies": {
+    "react-helmet-async": "^3.0.0",
     "react-router-dom": "^7.15.1"
+  },
+  "devDependencies": {
+    "vite-plugin-sitemap": "^0.8.2"
   }
 }

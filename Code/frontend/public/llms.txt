@@ -1,0 +1,22 @@
+# TiniTrove
+
+> Curated gifts, tech accessories, rare collectibles and self-care finds in Kenya.
+
+TiniTrove is a Kenyan e-commerce platform specializing in curated and meaningful gifts. 
+We offer nationwide delivery and secure payments via M-Pesa.
+
+## Navigation
+- [Home Page](https://www.tinitrove.co.ke/)
+- [All Products](https://www.tinitrove.co.ke/search)
+
+## Product Categories
+- [Aesthetic Lamps](https://www.tinitrove.co.ke/category/lamps)
+- [Mini Fans](https://www.tinitrove.co.ke/category/fans)
+- [Skin Care Organizers](https://www.tinitrove.co.ke/category/skin-care)
+- [Jewellery](https://www.tinitrove.co.ke/category/jewellery)
+- [Collectbles](https://www.tinitrove.co.ke/category/collectibles)
+- [Premium Lighters](https://www.tinitrove.co.ke/category/lighters)
+
+## Policies
+- [Privacy Policy](https://www.tinitrove.co.ke/privacy-policy)
+- [Terms of Service](https://www.tinitrove.co.ke/terms-of-service)

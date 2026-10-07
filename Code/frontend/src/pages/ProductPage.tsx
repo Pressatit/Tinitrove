@@ -6,6 +6,7 @@ import { useCart } from '@/hooks/useCart'
 import { useAuthStore } from '@/stores/authstore'
 import { useToastStore } from '@/stores/toaststore'
 import type { Product } from '@/types'
+import {SEO} from '@/components/Seo/seo'
 
 // ── Color name → hex map ──────────────────────────────────────
 const COLOR_HEX: Record<string, string> = {
@@ -103,6 +104,7 @@ export default function ProductPage() {
   if (loading) {
     return (
       <div className="py-4 space-y-4 max-w-xl mx-auto">
+
         <div className="h-4 w-16 bg-gray-200 rounded animate-pulse" />
 
         {/* Image gallery skeleton */}
@@ -142,6 +144,12 @@ export default function ProductPage() {
 
   return (
     <div className="py-4 max-w-xl mx-auto lg:max-w-2xl space-y-5">
+       <SEO
+          title={product.name}
+          description={`Buy ${product.name} for KES ${product.price} at TiniTrove. Nationwide delivery available.`}       
+          image={product?.image_urls?.[0]}
+          path={`/product/${product?.id}`}
+       />
 
       {/* Back button */}
       <button

@@ -6,6 +6,7 @@ import { useProducts } from '@/hooks/useProduct'
 import ProductCard from '@/components/ui/productcard'
 import ProductCardSkeleton from '@/components/ui/productcardskeleton'
 import { supabase } from '@/lib/supabaseClient'
+import { SEO } from '@/components/Seo/seo'
         
 
 
@@ -110,6 +111,12 @@ export default function HomePage() {
 
   return (
     <div className="py-4 space-y-8">
+
+      <SEO 
+        title="Curated Aesthetic Gifts in Kenya" 
+        description="Discover aesthetic gifts, tech accessories, lamps, and self-care finds at TiniTrove. Nationwide delivery in Kenya." 
+        path="/"
+      />
 
       {/* ── Hero banner ───────────────────────────────────── */}
       {/* Dark rounded rectangle from wireframe */}
