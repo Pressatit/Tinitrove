@@ -15,7 +15,7 @@ const DEFAULT_IMAGE = `${SITE_URL}/og-image.jpg`; // Add a nice fallback image t
 export function SEO({ title, description, image, path }: SEOProps) {
   const url = path ? `${SITE_URL}${path}` : SITE_URL;
   const ogImage = image || DEFAULT_IMAGE;
-  const fullTitle = `${title} | TiniTrove`;
+  const fullTitle = `${title}`;
 
   return (
     <SafeHelmet>
