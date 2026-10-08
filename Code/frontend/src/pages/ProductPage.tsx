@@ -146,7 +146,7 @@ export default function ProductPage() {
     <div className="py-4 max-w-xl mx-auto lg:max-w-2xl space-y-5">
        <SEO
           title={product.name}
-          description={`Buy ${product.name} for KES ${product.price} at TiniTrove. Nationwide delivery available.`}       
+          description={`Buy ${product.name} for KES ${product.price} at TiniTrove.`}       
           image={product?.image_urls?.[0]}
           path={`/product/${product?.id}`}
        />

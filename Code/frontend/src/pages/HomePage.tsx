@@ -114,7 +114,7 @@ export default function HomePage() {
 
       <SEO 
         title="Tinitrove" 
-        description="Discover aesthetic gifts, tech accessories, lamps, and self-care finds at TiniTrove. Nationwide delivery in Kenya." 
+        description="Discover aesthetic gifts, tech accessories, lamps, and self-care finds in Kenya" 
         path="/"
       />
 
