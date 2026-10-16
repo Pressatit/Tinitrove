@@ -63,7 +63,7 @@ export default defineConfig(async({mode}) => {
       }),
       prerender({
         routes:['/', ...dynamicRoutes],
-        renderer:"@prerenderer/renderer-puppeteer",
+        renderer:"@prerenderer/renderer-jsdom",
         rendererOptions:{
           renderAfterTime: 4000
         }
