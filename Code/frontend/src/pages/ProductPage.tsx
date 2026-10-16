@@ -66,6 +66,8 @@ export default function ProductPage() {
           setSelectedColor(data.color_variants[0])
         }
         setLoading(false)
+        
+        document.dispatchEvent(new Event('prerender-trigger'))
       })
   }, [id])
 

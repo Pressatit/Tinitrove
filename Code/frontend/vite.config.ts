@@ -4,6 +4,8 @@ import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 import Sitemap from 'vite-plugin-sitemap'
 
+import prerender from "@prerenderer/rollup-plugin"
+
 // https://vite.dev/config/
 export default defineConfig(async({mode}) => {
 
@@ -58,12 +60,19 @@ export default defineConfig(async({mode}) => {
         ],
         outDir:'dist',
         generateRobotsTxt:false,
+      }),
+      prerender({
+        routes:['/', ...dynamicRoutes],
+        renderer:"@prerenderer/renderer-puppeteer",
+        rendererOptions:{
+          renderAfterTime: 4000
+        }
       })
     ],
 
   resolve:{
     alias:{
-      '@':path.resolve(__dirname,'./src'),
+      '@': path.resolve(import.meta.dirname, './src'),
     }
   }
 }

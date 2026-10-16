@@ -108,6 +108,13 @@ export default function HomePage() {
     fetchActiveBanner()
   }, [])
 
+  useEffect(() => {
+    // Wait until all three product sections finish their Supabase fetches
+    if (!newLoading && !hotLoading && !allLoading) {
+      document.dispatchEvent(new Event('prerender-trigger'))
+    }
+  }, [newLoading, hotLoading, allLoading])
+
 
   return (
     <div className="py-4 space-y-8">
