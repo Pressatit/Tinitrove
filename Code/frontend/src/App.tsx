@@ -84,13 +84,14 @@ export default function App() {
          <Route path="/about"          element={<AboutPage />} />
          <Route path="/privacy-policy" element={<PrivacyPolicy/>}/>
          <Route path="/terms-of-service" element={<TermsOfService/>}/>
+         <Route path="/cart"           element={<CartPage />} />
          
 
 
         {/* Protected — must be logged in */}
         {/* RequireAuth redirects to /login if no session */}
          <Route element={<RequireAuth />}>
-           <Route path="/cart"     element={<CartPage />} />
+           
            <Route path="/checkout" element={<CheckoutPage />} />
            <Route path="/profile"  element={<ProfilePage />} />
            <Route path="/orders"   element={<OrdersPage/>} />

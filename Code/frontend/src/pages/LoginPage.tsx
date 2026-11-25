@@ -1,11 +1,14 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate,useSearchParams,useLocation } from 'react-router-dom'
 import { Mail, Lock, LogIn, Eye, EyeOff,Gift } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { useToastStore } from '@/stores/toaststore'
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const [searchParams]=useSearchParams()
+  const redirectTo =searchParams.get('redirect') || '/'
   const showToast =useToastStore(s=>s.showToast)
 
   const [email,       setEmail]       = useState('')
@@ -30,7 +33,7 @@ export default function LoginPage() {
     // auth listener in useAuth() will pick up the session automatically
     // navigate to home after successful login
     showToast('Logged in successfully','success')
-    navigate('/')
+    navigate(redirectTo, { replace: true })
     
     
 
@@ -189,7 +192,7 @@ export default function LoginPage() {
         <p className="text-center text-sm text-brand-muted mt-6">
           Don't have an account?{' '}
           <Link
-            to="/signup"
+            to={`/signup${location.search}`}
             className="text-brand-pink font-medium hover:underline"
           >
             Sign up
