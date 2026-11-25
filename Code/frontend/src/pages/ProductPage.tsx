@@ -73,11 +73,7 @@ export default function ProductPage() {
 
   // ── Add to cart ───────────────────────────────────────────
   const handleAddToCart = async () => {
-    if (!user) {
-      showToast('Sign in to add items to cart', 'info')
-      navigate('/login')
-      return
-    }
+    
     if (!product) return
 
     setAddingCart(true)
