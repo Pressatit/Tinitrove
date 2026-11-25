@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ShoppingCart, Loader2 } from 'lucide-react'
 import { useCart } from '@/hooks/useCart'
-import { useAuthStore } from '@/stores/authstore'
 import type { Product } from '@/types'
 
 interface ProductCardProps {
