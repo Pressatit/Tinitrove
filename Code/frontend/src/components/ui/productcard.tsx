@@ -11,16 +11,12 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const navigate  = useNavigate()
-  const user      = useAuthStore(s => s.user)
   const { addItem } = useCart()
   const [adding, setAdding] = useState(false)
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!user) { 
-      navigate('/login')
-      return
-    }
+    
     setAdding(true)
     await addItem(product, product.color_variants?.[0] ?? null)
     setAdding(false)

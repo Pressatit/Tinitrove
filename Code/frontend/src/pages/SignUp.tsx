@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate,useLocation,useSearchParams } from 'react-router-dom'
 import { User, Mail, Lock, Phone, MapPin, Eye, EyeOff, UserPlus,Gift } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { useToastStore } from '@/stores/toaststore'
@@ -17,6 +17,10 @@ const COUNTIES = [
 
 export default function SignUpPage() {
   const navigate = useNavigate()
+  const location= useLocation()
+  const [searchparams]=useSearchParams()
+  const redirectTo =searchparams.get('redirect') || '/'
+
   const showToast =useToastStore(s=>s.showToast)
 
   const [firstName,  setFirstName]  = useState('')
@@ -88,7 +92,7 @@ export default function SignUpPage() {
     }
 
     showToast('Signed up successfully!', 'success')
-    navigate('/')
+    navigate(redirectTo, { replace: true })
 
   } catch (err: any) {
     console.error("Unexpected signup workflow failure:", err)
@@ -363,7 +367,7 @@ export default function SignUpPage() {
         <p className="text-center text-sm text-brand-muted mt-6">
           Already have an account?{' '}
           <Link
-            to="/login"
+            to={`/login${location.search}`}
             className="text-brand-pink font-medium hover:underline"
           >
             Sign in

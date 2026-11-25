@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'motion/react'
 import { useCartStore, selectCartItemCount, selectCartTotalPrice, type CartItemWithProduct } from '@/stores/cartstore'
 import { useCart } from '@/hooks/useCart'
 import { useToastStore } from '@/stores/toaststore'
+import { useAuthStore } from '@/stores/authstore'
 import ProductCard from '@/components/ui/productcard'
 import ProductCardSkeleton from '@/components/ui/productcardskeleton'
 import { useProducts } from '@/hooks/useProduct'
@@ -146,12 +147,22 @@ export default function CartPage() {
   const totalPrice = useCartStore(selectCartTotalPrice)
   const { updateQty, removeItem, clearCart } = useCart()
   const showToast  = useToastStore(s => s.showToast)
+  const user =useAuthStore((s)=>s.user)
 
   const [clearing, setClearing] = useState(false)
 
   const handleRemove = (productId: string, productName: string) => {
     void removeItem(productId, productName)
   }
+
+  const handleCheckout = () => {
+  if (!user) {
+    showToast('Sign in or create an account to complete your order', 'info')
+    navigate('/login?redirect=/checkout')
+    return
+  }
+  navigate('/checkout')
+}
 
   const handleClearCart = async () => {
     setClearing(true)
@@ -211,7 +222,7 @@ export default function CartPage() {
             <CartItem
               key={item.product_id}
               item={item}
-              onUpdateQty={(id, qty) => { void updateQty(id, qty) }}
+              onUpdateQty={(id, qty) => { void updateQty(id, qty,item.color_selected) }}
               onRemove={handleRemove}
             />
           ))}
@@ -228,7 +239,7 @@ export default function CartPage() {
         </button>
 
         <button
-          onClick={() => navigate('/checkout')}
+          onClick={handleCheckout}
           className="
             flex items-center gap-2
             px-8 py-3 rounded-xl text-sm font-medium

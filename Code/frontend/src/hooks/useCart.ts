@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback ,useRef} from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useCartStore, type CartItemWithProduct } from '@/stores/cartstore'
 import { useAuthStore } from '@/stores/authstore'
@@ -65,12 +65,69 @@ async function loadCartFromDb(userId: string): Promise<CartItemWithProduct[]> {
   return shapeCartRows(data)
 }
 
+async function mergeGuestItemsToDb(
+  userId: string,
+  guestItems: CartItemWithProduct[]
+): Promise<void> {
+  if (guestItems.length === 0) return
+
+  const { data: existingRows, error: fetchError } = await supabase
+    .from('cart')
+    .select('product_id, quantity, color_selected, products(stock_count)')
+    .eq('user_id', userId)
+
+  if (fetchError) {
+    console.error('Failed to fetch DB cart for merge:', fetchError.message)
+    return
+  }
+
+  const makeKey = (productId: string, color: string | null) =>
+    `${productId}::${color ?? 'NONE'}`
+
+  const existingMap = new Map(
+    (existingRows || []).map((row) => [
+      makeKey(row.product_id, row.color_selected),
+      row,
+    ])
+  )
+
+  const upsertPayload = guestItems.map((guestItem) => {
+    const normalizedColor = guestItem.color_selected ?? null
+    const existing = existingMap.get(
+      makeKey(guestItem.product_id, normalizedColor)
+    )
+    const dbStock = (existing?.products as { stock_count?: number } | null)
+      ?.stock_count
+    const maxStock = dbStock ?? guestItem.product.stock_count ?? 99
+    const combinedQty = (existing?.quantity || 0) + guestItem.quantity
+
+    return {
+      user_id:        userId,
+      product_id:     guestItem.product_id,
+      color_selected: normalizedColor,
+      quantity:       Math.min(combinedQty, maxStock),
+    }
+  })
+
+  const { error: upsertError } = await supabase
+    .from('cart')
+    .upsert(upsertPayload, {
+      onConflict: 'user_id,product_id,color_selected',
+    })
+
+  if (upsertError) {
+    console.error('Failed to merge guest cart:', upsertError.message)
+  }
+}
+
+
 // ── Bootstrap: hydrate from DB + realtime sync (mount once in AppShell) ──
 export function useCartSync() {
   const user        = useAuthStore(s => s.user)
   const authLoading = useAuthStore(s => s.loading)
   const setItems    = useCartStore(s => s.setItems)
   const clearCart   = useCartStore(s => s.clearCart)
+  const prevUserId  = useRef<string | null>(null)
 
   const fetchCart = useCallback(async () => {
     if (!user) return
@@ -82,11 +139,28 @@ export function useCartSync() {
     if (authLoading) return
 
     if (!user) {
-      clearCart()
+      if (prevUserId.current !== null) {
+        clearCart()
+        prevUserId.current = null
+      }
       return
     }
 
-    void fetchCart()
+    prevUserId.current = user.id
+
+    const syncAndMerge = async () => {
+      const currentItems = useCartStore.getState().items
+      const guestItems = currentItems.filter((i) => i.user_id === 'guest')
+
+      if (guestItems.length > 0) {
+        await mergeGuestItemsToDb(user.id, guestItems)
+      }
+
+      await fetchCart()
+    }
+
+    void syncAndMerge()
+
 
     const channel = supabase
       .channel(`cart-sync-${user.id}`)
@@ -112,6 +186,7 @@ export function useCartSync() {
 export function useCartActions() {
   const user        = useAuthStore(s => s.user)
   const setItems    = useCartStore(s => s.setItems)
+  const storeAdd    =useCartStore(s => s.addItem)
   const storeRemove = useCartStore(s => s.removeItem)
   const storeUpdate = useCartStore(s => s.updateQty)
   const storeClear  = useCartStore(s => s.clearCart)
@@ -124,17 +199,45 @@ export function useCartActions() {
   }, [user, setItems])
 
   const addItem = async (product: Product, colorSelected: string | null = null) => {
+
     if (!user) {
-      showToast('Sign in to add items to cart', 'info')
+      const existing = useCartStore
+        .getState()
+        .items.find(
+          (i) =>
+            i.product_id === product.id &&
+            (i.color_selected ?? null) === (colorSelected ?? null)
+        )
+
+      if (existing && existing.quantity >= product.stock_count) {
+        showToast(`Only ${product.stock_count} available in stock`, 'info')
+        return
+      }
+
+      storeAdd({
+        id:             `guest-${product.id}-${colorSelected ?? 'default'}`,
+        user_id:        'guest',
+        product_id:     product.id,
+        quantity:       1,
+        color_selected: colorSelected,
+        added_at:       new Date().toISOString(),
+        product,
+      })
+      showToast(`${product.name} added to cart`, 'success')
       return
     }
 
-    const { data: existing, error: lookupError } = await supabase
+    let lookupQuery = supabase
       .from('cart')
       .select('id, quantity')
       .eq('user_id', user.id)
       .eq('product_id', product.id)
-      .maybeSingle()
+
+    lookupQuery = colorSelected
+      ? lookupQuery.eq('color_selected', colorSelected)
+      : lookupQuery.is('color_selected', null)
+
+    const { data: existing, error: lookupError } = await lookupQuery.maybeSingle()
 
     if (lookupError) {
       showToast('Failed to add item', 'error')
@@ -173,16 +276,29 @@ export function useCartActions() {
     showToast(`${product.name} added to cart`, 'success')
   }
 
-  const removeItem = async (productId: string, productName?: string) => {
-    if (!user) return
+  const removeItem = async (productId: string, colorSelected: string | null, productName?: string, ) => {
+    
 
-    storeRemove(productId)
+    storeRemove(productId,colorSelected)
 
-    const { error } = await supabase
+    if (!user) {
+      if (productName) showToast(`${productName} removed`, 'info')
+      return
+    }
+    
+   let deleteQuery = supabase
       .from('cart')
       .delete()
       .eq('user_id', user.id)
       .eq('product_id', productId)
+
+    if (colorSelected !== undefined) {
+      deleteQuery = colorSelected
+        ? deleteQuery.eq('color_selected', colorSelected)
+        : deleteQuery.is('color_selected', null)
+    }
+
+    const { error } = await deleteQuery
 
     if (error) {
       showToast('Failed to remove item', 'error')
@@ -193,21 +309,30 @@ export function useCartActions() {
     if (productName) showToast(`${productName} removed`, 'info')
   }
 
-  const updateQty = async (productId: string, qty: number) => {
-    if (!user) return
-
+  const updateQty = async (productId: string, qty: number,colorSelected : string |null ) => {
+    
     if (qty <= 0) {
-      await removeItem(productId)
+      await removeItem(productId,colorSelected)
       return
     }
 
-    storeUpdate(productId, qty)
+    storeUpdate(productId, qty,colorSelected)
 
-    const { error } = await supabase
+    if (!user) return
+
+    let updateQuery = supabase
       .from('cart')
       .update({ quantity: qty })
       .eq('user_id', user.id)
       .eq('product_id', productId)
+
+    if (colorSelected !== undefined) {
+      updateQuery = colorSelected
+        ? updateQuery.eq('color_selected', colorSelected)
+        : updateQuery.is('color_selected', null)
+    }
+
+    const { error } = await updateQuery
 
     if (error) {
       showToast('Failed to update quantity', 'error')
@@ -216,12 +341,10 @@ export function useCartActions() {
   }
 
   const clearCart = async () => {
-    if (!user) {
-      storeClear()
-      return
-    }
 
     storeClear()
+
+    if (!user) return
 
     const { error } = await supabase
       .from('cart')
