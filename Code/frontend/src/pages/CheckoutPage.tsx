@@ -574,8 +574,8 @@ const handleCopyTill = () => {
                 <CheckoutCartItem
                   key={item.product_id}
                   item={item}
-                  onRemove={(id) => { void removeItem(id) }}
-                  onUpdateQty={(id, qty) => { void updateQty(id, qty) }}
+                  onRemove={(id) => { void removeItem(id,item.color_selected) }}
+                  onUpdateQty={(id, qty) => { void updateQty(id, qty,item.color_selected) }}
                 />
               ))}
             </AnimatePresence>
