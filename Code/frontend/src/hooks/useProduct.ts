@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import type { Product } from '@/types'
+import { getTimeBucketSeed,shuffleWithPinned } from '@/lib/shuffle'
 
 interface ProductFilter {
   category_slug?: string   // for /category/:slug routes
@@ -8,12 +9,27 @@ interface ProductFilter {
   is_hot_deal?: boolean
   search?: string
   limit?: number
+  shuffle?:ShuffleOptions
+}
+
+interface ShuffleOptions {
+  enabled: boolean
+  salt?: number
+  pinnedCount?: number
+  poolLimit?: number
+  intervalMinutes?: number
 }
 
 export function useProducts(filter?: ProductFilter) {
   const [products, setProducts] = useState<Product[]>([])
   const [loading,  setLoading]  = useState(true)
   const [error,    setError]    = useState<string | null>(null)
+
+  const shuffleEnabled  = filter?.shuffle?.enabled ?? false
+  const shuffleSalt     = filter?.shuffle?.salt ?? 0
+  const pinnedCount     = filter?.shuffle?.pinnedCount ?? 0
+  const poolLimit       = filter?.shuffle?.poolLimit ?? 40
+  const intervalMinutes = filter?.shuffle?.intervalMinutes ?? 15
 
   useEffect(() => {
     setLoading(true)
@@ -54,9 +70,14 @@ export function useProducts(filter?: ProductFilter) {
 
       if (filter?.is_new_arrival) query = query.eq('is_new_arrival', true)
       if (filter?.is_hot_deal)    query = query.eq('is_hot_deal', true)
-      if (filter?.limit)          query = query.limit(filter.limit)
-
+      
       query = query.order('created_at', { ascending: false })
+
+      if (shuffleEnabled) {
+        query = query.limit(poolLimit)
+      } else if (filter?.limit) {
+        query = query.limit(filter.limit)
+      }
 
       const { data, error } = await query
 
@@ -66,7 +87,18 @@ export function useProducts(filter?: ProductFilter) {
         return
       }
 
-      setProducts(data as Product[])
+      let finalProducts = (data ?? []) as Product[]
+
+      if (shuffleEnabled){
+          const seed=getTimeBucketSeed(intervalMinutes,shuffleSalt)
+          finalProducts=shuffleWithPinned(finalProducts,seed,pinnedCount)
+        }
+
+      if (filter?.limit) {
+          finalProducts = finalProducts.slice(0, filter.limit)
+        }
+
+      setProducts(finalProducts)
       setLoading(false)
     }
 
@@ -78,6 +110,11 @@ export function useProducts(filter?: ProductFilter) {
     filter?.is_new_arrival,
     filter?.is_hot_deal,
     filter?.limit,
+    shuffleEnabled,
+    shuffleSalt,
+    intervalMinutes,
+    pinnedCount,
+    poolLimit
   ])
 
   return { products, loading, error }
