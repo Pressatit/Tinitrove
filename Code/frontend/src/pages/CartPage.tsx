@@ -16,8 +16,8 @@ function CartItem({
   onRemove,
 }: {
   item: CartItemWithProduct
-  onUpdateQty: (productId: string, qty: number) => void
-  onRemove: (productId: string, productName: string) => void
+  onUpdateQty: (productId: string, qty: number, colorSelected:string | null) => void
+  onRemove: (productId: string, colorSelected:string | null, productName: string) => void
 }) {
   return (
     <motion.div
@@ -69,7 +69,7 @@ function CartItem({
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => onUpdateQty(item.product_id, item.quantity - 1)}
+            onClick={() => onUpdateQty(item.product_id, item.quantity - 1,item.color_selected)}
             className="
               w-7 h-7 rounded-full flex items-center justify-center
               border border-pink-100 text-brand-charcoal
@@ -89,7 +89,7 @@ function CartItem({
           </span>
 
           <button
-            onClick={() => onUpdateQty(item.product_id, item.quantity + 1)}
+            onClick={() => onUpdateQty(item.product_id, item.quantity + 1,item.color_selected)}
             disabled={item.quantity >= item.product.stock_count}
             className="
               w-7 h-7 rounded-full flex items-center justify-center
@@ -104,7 +104,7 @@ function CartItem({
         </div>
 
         <button
-          onClick={() => onRemove(item.product_id, item.product.name)}
+          onClick={() => onRemove(item.product_id,item.color_selected,item.product.name)}
           className="flex items-center gap-1 text-[10px] text-red-400 hover:text-red-500 transition-colors"
           aria-label="Remove item"
         >
@@ -151,8 +151,8 @@ export default function CartPage() {
 
   const [clearing, setClearing] = useState(false)
 
-  const handleRemove = (productId: string, productName: string) => {
-    void removeItem(productId, productName)
+  const handleRemove = (productId: string,colorSelected:string |null, productName: string) => {
+    void removeItem(productId,colorSelected,productName)
   }
 
   const handleCheckout = () => {
