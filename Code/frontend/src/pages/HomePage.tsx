@@ -79,14 +79,16 @@ function ProductGrid({
 export default function HomePage() {
   // Two separate queries — new arrivals and hot deals
   // limit:4 shows 2 rows of 2 on mobile matching the wireframe
-  const { products: newArrivals, loading: newLoading } =
-    useProducts({ is_new_arrival: true, limit: 4 })
+  const { products: newArrivals, loading: newLoading } =useProducts(
+       { is_new_arrival: true, limit: 4 , shuffle: {enabled:true,poolLimit:10,salt:1}}
+      )
 
-  const { products: hotProducts, loading: hotLoading } =
-    useProducts({ is_hot_deal: true, limit: 4 })
+  const { products: hotProducts, loading: hotLoading } =useProducts(
+    { is_hot_deal: true, limit: 4 ,shuffle:{enabled:true,poolLimit:10,salt:2,}}
+    )
 
   const { products: allProducts, loading: allLoading } =
-    useProducts({ limit: 12})
+    useProducts({ limit: 12,shuffle:{enabled:true,salt:3,poolLimit:40}})
 
   const [activeBanner, setActiveBanner] = useState<{ image_url: string, title: string | null } | null>(null)
 
